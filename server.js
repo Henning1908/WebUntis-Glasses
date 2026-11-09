@@ -122,21 +122,29 @@ async function timetable(credentials) {
   const now = new Date();
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 7);
-  return webUntisCall(credentials, "getTimetable", {
-    options: {
-      element: {
-        id: credentials.personId,
-        type: credentials.personType || 5,
-        keyType: "id"
-      },
-      startDate: Number(start.toISOString().slice(0, 10).replaceAll("-", "")),
-      endDate: Number(end.toISOString().slice(0, 10).replaceAll("-", "")),
-      showInfo: true,
-      showSubstText: true,
-      showBooking: false,
-      hideErrors: true
-    }
-  });
+  const startDate = Number(start.toISOString().slice(0, 10).replaceAll("-", ""));
+  const endDate = Number(end.toISOString().slice(0, 10).replaceAll("-", ""));
+  try {
+    return await webUntisCall(credentials, "getTimetable", {
+      options: {
+        element: { id: credentials.personId, type: credentials.personType || 5, keyType: "id" },
+        startDate,
+        endDate,
+        showInfo: true,
+        showSubstText: true,
+        showBooking: false,
+        hideErrors: true
+      }
+    });
+  } catch (error) {
+    if (error.webUntisCode !== -32601) throw error;
+    return webUntisCall(credentials, "getTimetable2017", {
+      id: credentials.personId,
+      type: credentials.personType || 5,
+      startDate,
+      endDate
+    });
+  }
 }
 
 async function route(request, response) {

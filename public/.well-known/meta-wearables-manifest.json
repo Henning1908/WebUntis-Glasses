@@ -1,0 +1,10 @@
+{
+  "name": "WebUntis Glasses",
+  "short_name": "WebUntis",
+  "description": "Glanceable WebUntis timetable for Meta Display Glasses.",
+  "start_url": "/glasses.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6a35",
+  "scope": "/"
+}

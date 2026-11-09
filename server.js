@@ -42,6 +42,17 @@ function createPair() {
   return { id, code };
 }
 
+function profileFromCredentials(credentials) {
+  if (!credentials?.username || !credentials?.password) return null;
+  return {
+    baseUrl: credentials.baseUrl,
+    school: credentials.school,
+    username: credentials.username,
+    password: credentials.password,
+    deviceId: credentials.deviceId
+  };
+}
+
 function encrypt(value) {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", encryptionKey, iv);
@@ -172,8 +183,12 @@ async function route(request, response) {
     if (request.method === "POST" && url.pathname === "/api/glasses/pair") {
       const body = await readJson(request);
       const credentials = await loadCredentials();
-      if (credentials?.deviceId) {
-        return json(response, 200, { id: credentials.deviceId, connected: true });
+      if (credentials?.deviceId && (!body.deviceId || body.deviceId === credentials.deviceId)) {
+        return json(response, 200, {
+          id: credentials.deviceId,
+          connected: true,
+          profile: profileFromCredentials(credentials)
+        });
       }
       const pair = createPair();
       return json(response, 200, pair);
@@ -203,8 +218,19 @@ async function route(request, response) {
       const deviceId = url.searchParams.get("deviceId");
       return json(response, 200, {
         connected: Boolean(credentials?.deviceId && deviceId && credentials.deviceId === deviceId),
-        profileMissing: !credentials?.deviceId
+        profileMissing: !credentials?.deviceId,
+        profile: credentials?.deviceId === deviceId ? profileFromCredentials(credentials) : null
       });
+    }
+    if (request.method === "POST" && url.pathname === "/api/glasses/restore") {
+      const body = await readJson(request);
+      if (!body.deviceId || !body.username || !body.password) {
+        return json(response, 400, { error: "Ungültiges Brillenprofil." });
+      }
+      const restored = await authenticate(body);
+      restored.deviceId = body.deviceId;
+      await saveCredentials(restored);
+      return json(response, 200, { connected: true });
     }
     if (request.method === "POST" && url.pathname === "/api/pair/claim") {
       const body = await readJson(request);

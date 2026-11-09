@@ -65,6 +65,7 @@
       var lastTimetable = null;
       var retryTimer = null;
       var savedId = window.localStorage ? window.localStorage.getItem("webuntis-glasses-device") : null;
+      var savedProfile = window.localStorage ? window.localStorage.getItem("webuntis-glasses-profile") : null;
       function error(message) { state.innerHTML = message; state.className = "message error"; }
       function showRetry(message) {
         state.innerHTML = message;
@@ -165,10 +166,28 @@
         code.hidden = true;
         state.innerHTML = "Verbunden";
       }
+      function saveProfile(profile) {
+        if (profile && window.localStorage) {
+          window.localStorage.setItem("webuntis-glasses-profile", JSON.stringify(profile));
+        }
+      }
+      function restoreSavedProfile() {
+        if (!savedProfile) return Promise.resolve();
+        return fetch("/api/glasses/restore", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: savedProfile
+        }).then(function (response) {
+          if (!response.ok) throw new Error("Gespeichertes Profil konnte nicht wiederhergestellt werden.");
+        }).catch(function () {});
+      }
       disconnectButton.onclick = function () {
         fetch("/api/disconnect", { method: "POST" })
           .then(function () {
-            if (window.localStorage) window.localStorage.removeItem("webuntis-glasses-device");
+            if (window.localStorage) {
+              window.localStorage.removeItem("webuntis-glasses-device");
+              window.localStorage.removeItem("webuntis-glasses-profile");
+            }
             pair = null;
             code.innerHTML = "------";
             state.innerHTML = "Verbindung getrennt. Seite neu laden.";
@@ -191,6 +210,7 @@
                 : "Gerät wartet auf den Server …");
               return null;
             }
+            saveProfile(current.profile);
             showConnected();
             return Promise.all([
               fetch("/api/glasses/timetable?deviceId=" + encodeURIComponent(pair.id)).then(function (response) {
@@ -216,11 +236,7 @@
             retryTimer = setTimeout(checkPair, 5000);
           });
       }
-      if (savedId) {
-        pair = { id: savedId, connected: true };
-        showConnected();
-        checkPair();
-      }
+
       function moveDay(distance) {
         if (Math.abs(distance) < 45 || !dayGroups.length) return;
         if (distance > 0 && dayIndex < dayGroups.length - 1) dayIndex += 1;
@@ -269,10 +285,20 @@
           if (!result.id) throw new Error("Keine Geräteverbindung erhalten.");
           if (result.connected) {
             pair = result;
+            saveProfile(result.profile);
             if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);
             showConnected();
             checkPair();
           } else {
+            if (savedProfile) {
+              restoreSavedProfile().then(function () {
+                pair = { id: JSON.parse(savedProfile).deviceId, connected: true };
+                if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", pair.id);
+                showConnected();
+                checkPair();
+              });
+              return;
+            }
             pair = result;
             if (window.localStorage) {
               window.localStorage.removeItem("webuntis-glasses-device");
@@ -284,6 +310,13 @@
           setInterval(checkPair, 30000);
         })
         .catch(function (reason) { error(reason.message); });
+      restoreSavedProfile().then(function () {
+        if (savedId) {
+          pair = { id: savedId, connected: true };
+          showConnected();
+          checkPair();
+        }
+      });
     }());
   </script>
 </body>

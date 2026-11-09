@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebUntis Glasses</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body style="background:#ffffff;color:#111111;margin:0;font-family:Arial,sans-serif;">
+  <main class="glasses-app" style="max-width:520px;margin:0 auto;padding:24px;text-align:center;">
+    <span style="font-size:14px;font-weight:bold;">WEBUNTIS GLASSES</span>
+    <h1 style="font-size:32px;color:#111111;">Mit PC verbinden</h1>
+    <p>Gib diesen Code auf dem PC ein:</p>
+    <div id="pair-code" class="pair-code" style="margin:32px 0;font-size:64px;line-height:1;font-weight:bold;letter-spacing:8px;color:#e54b16;">------</div>
+    <p id="pair-state" class="muted" style="font-size:18px;">Verbindung wird vorbereitet ...</p>
+    <section id="glass-timetable" class="card" hidden>
+      <div class="card-title"><span>HEUTE</span><h2>Stundenplan</h2></div>
+      <div id="glass-entries"></div>
+    </section>
+  </main>
+  <script>
+    (function () {
+      var code = document.getElementById("pair-code");
+      var state = document.getElementById("pair-state");
+      var timetable = document.getElementById("glass-timetable");
+      var output = document.getElementById("glass-entries");
+      var pair = null;
+      function error(message) { state.innerHTML = message; state.className = "message error"; }
+      function checkPair() {
+        if (!pair) return;
+        fetch("/api/pair/status?id=" + encodeURIComponent(pair.id))
+          .then(function (response) { return response.json(); })
+          .then(function (current) {
+            if (!current.connected) return null;
+            state.innerHTML = "Verbunden";
+            return fetch("/api/timetable");
+          })
+          .then(function (response) { return response ? response.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+            var items = (data.entries || []).slice(0, 8);
+            output.innerHTML = items.map(function (item) {
+              var subject = item.subjects && item.subjects.length ? item.subjects[0].name : "Unterricht";
+              var room = item.rooms && item.rooms.length ? item.rooms[0].name : "";
+              var start = String(item.startTime || "0000");
+              while (start.length < 4) start = "0" + start;
+              return "<div class='entry'><time>" + start.substr(0, 2) + ":" + start.substr(2) + "</time><div><strong>" + subject + "</strong><small>" + room + "</small></div></div>";
+            }).join("");
+            timetable.hidden = false;
+          })
+          .catch(function (reason) { error(reason.message); });
+      }
+      fetch("/api/glasses/pair", { method: "POST" })
+        .then(function (response) { return response.json(); })
+        .then(function (result) {
+          if (!result.code || !result.id) throw new Error("Kein Kopplungscode erhalten.");
+          pair = result;
+          code.innerHTML = result.code.substr(0, 3) + " " + result.code.substr(3);
+          state.innerHTML = "Code am PC eingeben ...";
+          setInterval(checkPair, 2000);
+        })
+        .catch(function (reason) { error(reason.message); });
+    }());
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebUntis Glasses</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main>
+    <header><span class="eyebrow">META DISPLAY</span><h1>WebUntis Glasses</h1><p>Einmal koppeln. Stundenplan immer griffbereit.</p></header>
+    <section class="grid">
+      <article class="card">
+        <div class="card-title"><span>01</span><h2>Brille koppeln</h2></div>
+        <p>Öffne die App auf der Brille und gib den angezeigten 6-stelligen Code hier ein.</p>
+        <form id="pair-form">
+          <label for="code">Verbindungscode</label>
+          <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000 000" required>
+          <label for="username">WebUntis Benutzername</label>
+          <input id="username" name="username" autocomplete="username" required>
+          <label for="password">WebUntis Passwort</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <button>Koppeln und anmelden</button>
+        </form>
+        <p id="pair-message" class="message"></p>
+      </article>
+      <article class="card glasses">
+        <div class="card-title"><span>02</span><h2>Brillenansicht</h2></div>
+        <div class="glasses-screen">
+          <span class="status-dot"></span><span id="glass-status">Warte auf Kopplung</span>
+          <strong id="next-subject">—</strong>
+          <div id="next-details">Öffne die Web-App auf der Brille.</div>
+        </div>
+        <button id="refresh" class="secondary">Stundenplan aktualisieren</button>
+      </article>
+    </section>
+    <section class="card timetable"><div class="card-title"><span>03</span><h2>Stundenplan</h2></div><div id="entries"><p class="muted">Noch keine Daten geladen.</p></div></section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: webuntis-glasses
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: WEBUNTIS_ENCRYPTION_KEY
+        generateValue: true

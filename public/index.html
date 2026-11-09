@@ -12,10 +12,14 @@
     <section class="grid">
       <article class="card">
         <div class="card-title"><span>01</span><h2>Brille koppeln</h2></div>
-        <p>Öffne die App auf der Brille und gib den angezeigten 6-stelligen Code hier ein. Verwende hier deinen normalen WebUntis-Benutzernamen und dein normales WebUntis-Passwort.</p>
+        <p>Öffne die App auf der Brille und gib den angezeigten 6-stelligen Code hier ein. Für WebUntis werden vier Angaben benötigt.</p>
         <form id="pair-form">
           <label for="code">Verbindungscode</label>
           <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000 000" required>
+          <label for="baseUrl">WebUntis-Server / URL</label>
+          <input id="baseUrl" name="baseUrl" type="url" value="https://ggb.webuntis.com" placeholder="https://beispiel.webuntis.com" required>
+          <label for="school">Schulkennung</label>
+          <input id="school" name="school" value="ggb" placeholder="ggb" required>
           <label for="username">WebUntis Benutzername</label>
           <input id="username" name="username" autocomplete="username" required>
           <label for="password">WebUntis Passwort</label>

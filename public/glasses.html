@@ -10,26 +10,72 @@
 <body class="glasses-page">
   <main class="glasses-app">
     <span class="glasses-brand">WEBUNTIS</span>
-    <h1>Mit PC verbinden</h1>
-    <p>Gib diesen Code auf dem PC ein:</p>
+    <h1 id="glass-title">Mit PC verbinden</h1>
+    <p id="pair-instruction">Gib diesen Code auf dem PC ein:</p>
     <div id="pair-code" class="pair-code">------</div>
     <p id="pair-state" class="muted">Verbindung wird vorbereitet ...</p>
     <button id="disconnect" class="glasses-disconnect" type="button">Verbindung trennen</button>
-    <section id="glass-timetable" class="glasses-timetable" hidden>
-      <div class="card-title"><span>HEUTE</span><h2>Stundenplan</h2></div>
-      <div id="glass-entries"></div>
+    <section id="glass-next" class="glasses-next" hidden>
+      <span class="next-label">NÄCHSTER UNTERRICHT</span>
+      <strong id="next-subject">—</strong>
+      <div id="next-time" class="next-time">--:--–--:--</div>
+      <div id="next-room" class="next-meta">Raum wird geladen ...</div>
+      <div id="next-date" class="next-meta"></div>
+      <div id="next-status" class="next-status"></div>
     </section>
   </main>
   <script>
     (function () {
       var code = document.getElementById("pair-code");
+      var title = document.getElementById("glass-title");
+      var instruction = document.getElementById("pair-instruction");
       var state = document.getElementById("pair-state");
-      var timetable = document.getElementById("glass-timetable");
-      var output = document.getElementById("glass-entries");
+      var next = document.getElementById("glass-next");
+      var nextSubject = document.getElementById("next-subject");
+      var nextTime = document.getElementById("next-time");
+      var nextRoom = document.getElementById("next-room");
+      var nextDate = document.getElementById("next-date");
+      var nextStatus = document.getElementById("next-status");
       var disconnectButton = document.getElementById("disconnect");
       var pair = null;
       var savedId = window.localStorage ? window.localStorage.getItem("webuntis-glasses-device") : null;
       function error(message) { state.innerHTML = message; state.className = "message error"; }
+      function text(items, fallback) {
+        return items && items.length ? items.map(function (item) { return item.name; }).join(", ") : fallback;
+      }
+      function formatDate(value) {
+        var raw = String(value || "");
+        if (raw.length !== 8) return raw;
+        return raw.substr(6, 2) + "." + raw.substr(4, 2) + "." + raw.substr(0, 4);
+      }
+      function showNext(items) {
+        var item = items && items[0];
+        if (!item) {
+          next.hidden = false;
+          nextSubject.innerHTML = "Heute kein Unterricht";
+          nextTime.innerHTML = "";
+          nextRoom.innerHTML = "Keine weiteren Stunden im geladenen Zeitraum.";
+          nextDate.innerHTML = "";
+          nextStatus.innerHTML = "";
+          return;
+        }
+        var start = String(item.startTime || "0000");
+        var end = String(item.endTime || "0000");
+        while (start.length < 4) start = "0" + start;
+        while (end.length < 4) end = "0" + end;
+        nextSubject.innerHTML = text(item.subjects, "Unterricht");
+        nextTime.innerHTML = start.substr(0, 2) + ":" + start.substr(2) + "–" + end.substr(0, 2) + ":" + end.substr(2);
+        nextRoom.innerHTML = "Raum: " + text(item.rooms, "Noch nicht festgelegt");
+        nextDate.innerHTML = formatDate(item.date);
+        nextStatus.innerHTML = item.cancelled ? "Entfällt" : (item.substitution || item.info || "");
+        next.hidden = false;
+      }
+      function showConnected() {
+        title.innerHTML = "Dein nächster Unterricht";
+        instruction.hidden = true;
+        code.hidden = true;
+        state.innerHTML = "Verbunden";
+      }
       disconnectButton.onclick = function () {
         fetch("/api/disconnect", { method: "POST" })
           .then(function () {
@@ -37,7 +83,10 @@
             pair = null;
             code.innerHTML = "------";
             state.innerHTML = "Verbindung getrennt. Seite neu laden.";
-            timetable.hidden = true;
+            next.hidden = true;
+            title.innerHTML = "Mit PC verbinden";
+            instruction.hidden = false;
+            code.hidden = false;
           })
           .catch(function (reason) { error(reason.message); });
       };
@@ -47,39 +96,29 @@
           .then(function (response) { return response.json(); })
           .then(function (current) {
             if (!current.connected) return null;
-            state.innerHTML = "Verbunden";
+            showConnected();
             return fetch("/api/timetable");
           })
           .then(function (response) { return response ? response.json() : null; })
           .then(function (data) {
             if (!data) return;
-            var items = (data.entries || []).slice(0, 8);
-            output.innerHTML = items.map(function (item) {
-              var subject = item.subjects && item.subjects.length ? item.subjects[0].name : "Unterricht";
-              var room = item.rooms && item.rooms.length ? item.rooms[0].name : "";
-              var start = String(item.startTime || "0000");
-              while (start.length < 4) start = "0" + start;
-              return "<div class='entry'><time>" + start.substr(0, 2) + ":" + start.substr(2) + "</time><div><strong>" + subject + "</strong><small>" + room + "</small></div></div>";
-            }).join("");
-            timetable.hidden = false;
+            showNext(data.entries || []);
           })
           .catch(function (reason) { error(reason.message); });
       }
       if (savedId) {
         pair = { id: savedId, connected: true };
-        code.innerHTML = "✓";
-        state.innerHTML = "Verbunden ...";
+        showConnected();
         checkPair();
       }
       fetch("/api/glasses/pair", { method: "POST" })
         .then(function (response) { return response.json(); })
         .then(function (result) {
-          if (!result.code || !result.id) throw new Error("Kein Kopplungscode erhalten.");
+          if (!result.id) throw new Error("Keine Geräteverbindung erhalten.");
           if (result.connected) {
             pair = result;
             if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);
-            code.innerHTML = "✓";
-            state.innerHTML = "Verbunden";
+            showConnected();
             checkPair();
           } else if (!savedId) {
             pair = result;

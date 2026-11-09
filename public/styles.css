@@ -18,6 +18,12 @@ button { width: 100%; border: 0; border-radius: 10px; background: #ff6a35; color
 .glasses-page .pair-code { margin: 25px 0 12px; color: #fff; font-size: clamp(54px, 16vw, 82px); letter-spacing: .1em; line-height: .95; text-shadow: 0 2px 18px rgba(0,0,0,.45); }
 .glasses-page #pair-state { color: rgba(245,247,250,.8); font-size: 14px; }
 .glasses-page .glasses-disconnect { width: auto; margin: 14px auto 0; padding: 8px 13px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: rgba(0,0,0,.18); color: rgba(255,255,255,.72); font-size: 12px; font-weight: 600; }
+.glasses-page .glasses-next { margin-top: 24px; padding: 22px 20px; border: 1px solid rgba(255,255,255,.2); border-radius: 20px; background: rgba(10,12,16,.48); backdrop-filter: blur(8px); text-align: left; }
+.glasses-page .next-label { color: #ff9a76; font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+.glasses-page #next-subject { display: block; margin-top: 12px; color: #fff; font-size: clamp(29px, 9vw, 46px); line-height: 1; letter-spacing: -.04em; }
+.glasses-page .next-time { margin-top: 16px; color: #fff; font-size: 25px; font-variant-numeric: tabular-nums; }
+.glasses-page .next-meta { margin-top: 8px; color: rgba(245,247,250,.7); font-size: 14px; }
+.glasses-page .next-status { margin-top: 14px; color: #ffb097; font-size: 13px; }
 .glasses-page .glasses-timetable { margin-top: 22px; padding: 15px 17px; border: 1px solid rgba(255,255,255,.2); border-radius: 18px; background: rgba(10,12,16,.48); backdrop-filter: blur(8px); text-align: left; }
 .glasses-page .glasses-timetable .card-title { margin-bottom: 5px; }
 .glasses-page .glasses-timetable h2 { color: #fff; font-size: 17px; }

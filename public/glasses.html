@@ -23,6 +23,14 @@
       <div id="next-date" class="next-meta"></div>
       <div id="next-status" class="next-status"></div>
     </section>
+    <section id="glass-day" class="glasses-day" hidden>
+      <div class="day-heading">
+        <span class="next-label">TAGESPLAN</span>
+        <strong id="day-title">Heute</strong>
+      </div>
+      <div id="day-entries"></div>
+      <div class="swipe-hint">← zurück · weiter →</div>
+    </section>
   </main>
   <script>
     (function () {
@@ -36,8 +44,14 @@
       var nextRoom = document.getElementById("next-room");
       var nextDate = document.getElementById("next-date");
       var nextStatus = document.getElementById("next-status");
+      var day = document.getElementById("glass-day");
+      var dayTitle = document.getElementById("day-title");
+      var dayEntries = document.getElementById("day-entries");
       var disconnectButton = document.getElementById("disconnect");
       var pair = null;
+      var dayGroups = [];
+      var dayIndex = -1;
+      var touchStartX = 0;
       var savedId = window.localStorage ? window.localStorage.getItem("webuntis-glasses-device") : null;
       function error(message) { state.innerHTML = message; state.className = "message error"; }
       function text(items, fallback) {
@@ -47,6 +61,58 @@
         var raw = String(value || "");
         if (raw.length !== 8) return raw;
         return raw.substr(6, 2) + "." + raw.substr(4, 2) + "." + raw.substr(0, 4);
+      }
+      function todayKey() {
+        var parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Europe/Berlin",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).formatToParts(new Date()).filter(function (part) {
+          return part.type !== "literal";
+        }).map(function (part) {
+          return [part.type, part.value];
+        }));
+        return parts.year + parts.month + parts.day;
+      }
+      function formatTime(value) {
+        var result = String(value || "0000");
+        while (result.length < 4) result = "0" + result;
+        return result.substr(0, 2) + ":" + result.substr(2);
+      }
+      function renderDay() {
+        if (dayIndex < 0 || !dayGroups[dayIndex]) {
+          next.hidden = false;
+          day.hidden = true;
+          return;
+        }
+        var group = dayGroups[dayIndex];
+        next.hidden = true;
+        day.hidden = false;
+        dayTitle.innerHTML = group.key === todayKey() ? "Heute" : formatDate(group.key);
+        dayEntries.innerHTML = group.items.length ? group.items.map(function (item) {
+          var status = item.cancelled ? " · Entfällt" : (item.substitution || item.info ? " · " + (item.substitution || item.info) : "");
+          return "<div class='day-entry'><time>" + formatTime(item.startTime) + "–" + formatTime(item.endTime) + "</time><div><strong>" + text(item.subjects, "Unterricht") + "</strong><small>Raum: " + text(item.rooms, "offen") + status + "</small></div></div>";
+        }).join("") : "<p class='day-empty'>Keine weiteren Stunden.</p>";
+      }
+      function buildDayGroups(items) {
+        var grouped = {};
+        (items || []).forEach(function (item) {
+          var key = String(item.date || "").replaceAll("-", "");
+          if (!key) return;
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(item);
+        });
+        var keys = Object.keys(grouped).sort();
+        var today = todayKey();
+        if (keys.indexOf(today) === -1) keys.unshift(today);
+        dayGroups = keys.map(function (key) {
+          return { key: key, items: (grouped[key] || []).sort(function (left, right) {
+            return Number(left.startTime || 0) - Number(right.startTime || 0);
+          }) };
+        });
+        dayIndex = -1;
+        renderDay();
       }
       function showNext(items) {
         var item = items && items[0];
@@ -84,6 +150,7 @@
             code.innerHTML = "------";
             state.innerHTML = "Verbindung getrennt. Seite neu laden.";
             next.hidden = true;
+            day.hidden = true;
             title.innerHTML = "Mit PC verbinden";
             instruction.hidden = false;
             code.hidden = false;
@@ -103,6 +170,7 @@
           .then(function (data) {
             if (!data) return;
             showNext(data.entries || []);
+            buildDayGroups(data.entries || []);
           })
           .catch(function (reason) { error(reason.message); });
       }
@@ -111,6 +179,17 @@
         showConnected();
         checkPair();
       }
+      document.addEventListener("touchstart", function (event) {
+        if (event.touches && event.touches.length) touchStartX = event.touches[0].clientX;
+      }, { passive: true });
+      document.addEventListener("touchend", function (event) {
+        if (!event.changedTouches || !event.changedTouches.length) return;
+        var distance = event.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(distance) < 45 || !dayGroups.length) return;
+        if (distance > 0 && dayIndex < dayGroups.length - 1) dayIndex += 1;
+        if (distance < 0 && dayIndex >= 0) dayIndex -= 1;
+        renderDay();
+      }, { passive: true });
       fetch("/api/glasses/pair", { method: "POST" })
         .then(function (response) { return response.json(); })
         .then(function (result) {

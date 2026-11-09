@@ -104,7 +104,16 @@ async function authenticate({ username, password, school = "ggb", baseUrl = "htt
   username = username.trim();
   const cleanBaseUrl = baseUrl.replace(/\/+$/, "");
   const client = new WebUntis(school, username, password, new URL(cleanBaseUrl).hostname);
-  await client.login();
+  try {
+    await client.login();
+  } catch (error) {
+    const code = error.webUntisCode ?? error.code;
+    if (code === -8504 || code === "-8504" || String(error.message).toLowerCase().includes("bad credentials")) {
+      error.webUntisCode = -8504;
+      error.message = "WebUntis lehnt die Anmeldung ab. Verwende dein normales WebUntis-Passwort, nicht den WebUntis-Mobile-QR-Schlüssel, und prüfe Benutzername, Schulkennung und Server.";
+    }
+    throw error;
+  }
   return { baseUrl: cleanBaseUrl, school, username, password };
 }
 
@@ -200,8 +209,8 @@ async function route(request, response) {
       const body = await readJson(request);
       const pair = [...pairs.values()].find((item) => item.code === String(body.code));
       if (!pair || Date.now() - pair.createdAt > 10 * 60 * 1000) return json(response, 400, { error: "Code ungültig oder abgelaufen." });
-      pair.status = "connected";
       pair.credentials = await authenticate(body);
+      pair.status = "connected";
       pair.credentials.deviceId = pair.id;
       cachedCredentials = pair.credentials;
       await saveCredentials(pair.credentials);
@@ -254,8 +263,10 @@ async function route(request, response) {
     return json(response, 404, { error: "Nicht gefunden." });
   } catch (error) {
     console.error(error);
-    const message = error.webUntisCode === -1
-      ? "WebUntis lehnt die Anmeldung ab. Prüfe Benutzername, Passwort und dass du nicht den WebUntis-QR-Schlüssel als Passwort eingibst."
+    const message = error.webUntisCode === -8504
+      ? error.message
+      : error.webUntisCode === -1
+        ? "WebUntis lehnt die Anmeldung ab. Prüfe Benutzername, Passwort und dass du nicht den WebUntis-QR-Schlüssel als Passwort eingibst."
       : error.message || "Unbekannter Fehler.";
     return json(response, 502, { error: message });
   }

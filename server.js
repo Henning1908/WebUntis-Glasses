@@ -217,7 +217,10 @@ async function route(request, response) {
       const filename = path.normalize(path.join(publicDir, relative));
       if (filename !== publicDir && !filename.startsWith(`${publicDir}${path.sep}`)) return json(response, 403, { error: "Nicht erlaubt." });
       const content = await readFile(filename);
-      response.writeHead(200, { "Content-Type": mimeTypes[path.extname(filename)] || "application/octet-stream" });
+      response.writeHead(200, {
+        "Content-Type": mimeTypes[path.extname(filename)] || "application/octet-stream",
+        "Cache-Control": "no-store, no-cache, must-revalidate"
+      });
       return response.end(content);
     }
     return json(response, 404, { error: "Nicht gefunden." });

@@ -9,7 +9,7 @@ import { WebUntis } from "webuntis";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(root, "public");
-const dataDir = path.join(root, "data");
+const dataDir = process.env.DATA_DIR || path.join(root, "data");
 const credentialsFile = path.join(dataDir, "credentials.enc");
 const certificateFile = process.env.TLS_CERT || path.join(dataDir, "localhost-cert.pem");
 const keyFile = process.env.TLS_KEY || path.join(dataDir, "localhost-key.pem");
@@ -169,13 +169,6 @@ async function route(request, response) {
     if (request.method === "GET" && url.pathname === "/api/app-status") {
       const credentials = await loadCredentials();
       return json(response, 200, { connected: Boolean(credentials?.deviceId) });
-    }
-    if (request.method === "POST" && url.pathname === "/api/session/restore") {
-      const body = await readJson(request);
-      const restored = await authenticate(body);
-      restored.deviceId = body.deviceId || randomBytes(18).toString("base64url");
-      await saveCredentials(restored);
-      return json(response, 200, { connected: true, deviceId: restored.deviceId });
     }
     if (request.method === "POST" && url.pathname === "/api/disconnect") {
       cachedCredentials = null;

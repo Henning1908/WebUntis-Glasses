@@ -8,7 +8,7 @@
 
 ## Was ist das?
 
-WebUntis Glasses verbindet eine Web-App auf der Brille mit einer Handy-Ansicht.
+WebUntis Glasses verbindet eine Web-App auf der Brille mit einer PC- oder Handy-Ansicht.
 Die Brille zeigt beim Öffnen einen 6-stelligen Code. Auf dem PC wird dieser Code
 zusammen mit den WebUntis-Zugangsdaten bestätigt. Danach zeigt die Brillenansicht
 die nächsten Stunden mit Fach, Uhrzeit und Raum.
@@ -34,10 +34,11 @@ Meta Display Glasses ─────────────────┘
 - `server.js`: Pairing, verschlüsselte Speicherung und WebUntis-API
 - `render.yaml`: Ein-Klick-Konfiguration für Render
 
-Das Handy ist die dauerhafte Steuerzentrale. Nach der ersten Anmeldung wird die
-Sitzung lokal im Browser des Handys gespeichert und beim Öffnen automatisch auf
-dem Server wiederhergestellt. Solange die Handy-Seite geöffnet ist, sendet sie
-regelmäßig einen Heartbeat; die Brille benötigt keinen PC.
+Die zentrale Server-Sitzung ist die dauerhafte Steuerzentrale. PC, Handy und
+Brille greifen auf dieselbe verschlüsselte Sitzung zu. Die Brille speichert
+keine WebUntis-Zugangsdaten; eine Web-App auf der Brille hat keinen verlässlichen
+eigenen Dateispeicher. Auf Render wird dafür ein persistenter Datenträger
+verwendet, damit ein Neustart die Verbindung nicht löscht.
 
 ## Schnellstart lokal
 
@@ -74,7 +75,9 @@ werden von einigen Brillen nicht akzeptiert; für echte Nutzung ist Hosting mit
 4. `Start Command`: `npm start`
 5. Environment Variable setzen:
    - `WEBUNTIS_ENCRYPTION_KEY`: langer zufälliger Wert
-6. Deploy starten.
+6. Deploy starten. Für den persistenten Speicher ist der Render-Starter-Tarif
+   mit einem 1-GB-Datenträger vorgesehen; mit Render Free würde die Datei bei
+   einem Neustart wieder verloren gehen.
 
 Render beendet TLS vor der Node-App und stellt automatisch eine öffentliche
 `https://...onrender.com`-Adresse bereit. In diesem Fall werden keine lokalen

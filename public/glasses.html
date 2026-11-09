@@ -186,7 +186,9 @@
           .then(function (response) { return response.json(); })
           .then(function (current) {
             if (!current.connected) {
-              showRetry("Gerät wartet auf den Server …");
+              showRetry(current.profileMissing
+                ? "Profil fehlt – Code unten am PC oder Handy eingeben."
+                : "Gerät wartet auf den Server …");
               return null;
             }
             showConnected();

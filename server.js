@@ -202,7 +202,8 @@ async function route(request, response) {
       const credentials = await loadCredentials();
       const deviceId = url.searchParams.get("deviceId");
       return json(response, 200, {
-        connected: Boolean(credentials?.deviceId && deviceId && credentials.deviceId === deviceId)
+        connected: Boolean(credentials?.deviceId && deviceId && credentials.deviceId === deviceId),
+        profileMissing: !credentials?.deviceId
       });
     }
     if (request.method === "POST" && url.pathname === "/api/pair/claim") {

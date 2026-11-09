@@ -23,7 +23,7 @@ function formatEntry(item) {
 async function loadTimetable() {
   try {
     const data = await api("/api/timetable");
-    const formatted = data.entries.map(formatEntry).slice(0, 30);
+    const formatted = (data.entries || []).map(formatEntry).slice(0, 30);
     entries.innerHTML = formatted.length ? formatted.map((item) => `<div class="entry"><time>${item.time}</time><div><strong>${item.subject}</strong><small>${item.date || ""}</small></div><small>${item.room}</small></div>`).join("") : '<p class="muted">Keine Stunden gefunden.</p>';
     const next = formatted[0];
     if (next) { nextSubject.textContent = next.subject; nextDetails.textContent = `${next.time} · ${next.room}`; glassStatus.textContent = "Verbunden · nächster Unterricht"; }
@@ -31,6 +31,15 @@ async function loadTimetable() {
     glassStatus.textContent = "Nicht verbunden";
     nextDetails.textContent = error.message;
   }
+}
+
+async function loadExistingConnection() {
+  const status = await api("/api/app-status");
+  if (!status.connected) return false;
+  pairMessage.className = "message ok";
+  pairMessage.textContent = "Bereits verbunden. Lade Stundenplan ...";
+  await loadTimetable();
+  return true;
 }
 
 pairForm.addEventListener("submit", async (event) => {
@@ -46,4 +55,7 @@ pairForm.addEventListener("submit", async (event) => {
   } catch (error) { pairMessage.className = "message error"; pairMessage.textContent = error.message; }
 });
 document.querySelector("#refresh").addEventListener("click", loadTimetable);
-loadTimetable();
+loadExistingConnection().catch((error) => {
+  pairMessage.className = "message error";
+  pairMessage.textContent = error.message;
+});

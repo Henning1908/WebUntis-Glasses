@@ -25,6 +25,7 @@
       var timetable = document.getElementById("glass-timetable");
       var output = document.getElementById("glass-entries");
       var pair = null;
+      var savedId = window.localStorage ? window.localStorage.getItem("webuntis-glasses-device") : null;
       function error(message) { state.innerHTML = message; state.className = "message error"; }
       function checkPair() {
         if (!pair) return;
@@ -50,14 +51,29 @@
           })
           .catch(function (reason) { error(reason.message); });
       }
+      if (savedId) {
+        pair = { id: savedId, connected: true };
+        code.innerHTML = "✓";
+        state.innerHTML = "Verbunden ...";
+        checkPair();
+      }
       fetch("/api/glasses/pair", { method: "POST" })
         .then(function (response) { return response.json(); })
         .then(function (result) {
           if (!result.code || !result.id) throw new Error("Kein Kopplungscode erhalten.");
-          pair = result;
-          code.innerHTML = result.code.substr(0, 3) + " " + result.code.substr(3);
-          state.innerHTML = "Code am PC eingeben ...";
-          setInterval(checkPair, 2000);
+          if (result.connected) {
+            pair = result;
+            if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);
+            code.innerHTML = "✓";
+            state.innerHTML = "Verbunden";
+            checkPair();
+          } else if (!savedId) {
+            pair = result;
+            if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);
+            code.innerHTML = result.code.substr(0, 3) + " " + result.code.substr(3);
+            state.innerHTML = "Code am PC eingeben ...";
+          }
+          setInterval(checkPair, 5000);
         })
         .catch(function (reason) { error(reason.message); });
     }());

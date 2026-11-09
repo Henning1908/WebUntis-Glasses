@@ -19,6 +19,7 @@ const encryptionKey = scryptSync(
   32
 );
 const pairs = new Map();
+let cachedCredentials = null;
 const mimeTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 
 async function json(response, status, body) {
@@ -57,18 +58,26 @@ function decrypt(value) {
 async function saveCredentials(credentials) {
   await mkdir(dataDir, { recursive: true });
   await writeFile(credentialsFile, encrypt(credentials), { mode: 0o600 });
+  cachedCredentials = credentials;
 }
 
 async function loadCredentials() {
+  if (cachedCredentials) return cachedCredentials;
   if (!existsSync(credentialsFile)) return null;
-  try { return decrypt(await readFile(credentialsFile, "utf8")); } catch { return null; }
+  try {
+    cachedCredentials = decrypt(await readFile(credentialsFile, "utf8"));
+    return cachedCredentials;
+  } catch { return null; }
 }
 
 async function webUntisCall(credentials, method, params) {
   const endpoint = `${credentials.baseUrl}/WebUntis/jsonrpc.do?school=${encodeURIComponent(credentials.school)}`;
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(credentials.sessionId ? { Cookie: `JSESSIONID=${credentials.sessionId}` } : {})
+    },
     body: JSON.stringify({ id: Date.now(), jsonrpc: "2.0", method, params: credentials.sessionId ? { ...params, sessionId: credentials.sessionId } : params })
   });
   if (!response.ok) throw new Error(`WebUntis antwortet mit HTTP ${response.status}`);
@@ -89,7 +98,15 @@ async function authenticate({ username, password, school = "ggb", baseUrl = "htt
   const result = await webUntisCall({ baseUrl: cleanBaseUrl, school }, "authenticate", {
     user: username, password, client: "webuntis-glasses"
   });
-  return { baseUrl: cleanBaseUrl, school, username, password, sessionId: result.sessionId, personId: result.personId, role: result.role };
+  return {
+    baseUrl: cleanBaseUrl,
+    school,
+    username,
+    password,
+    sessionId: result.sessionId,
+    personId: result.personId ?? result.userId,
+    role: result.role
+  };
 }
 
 async function timetable(credentials) {
@@ -97,7 +114,7 @@ async function timetable(credentials) {
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 7);
   return webUntisCall(credentials, "getOwnTimetable", {
-    id: credentials.personId,
+    personId: credentials.personId,
     klasseFields: ["name"],
     startDate: Number(start.toISOString().slice(0, 10).replaceAll("-", "")),
     endDate: Number(end.toISOString().slice(0, 10).replaceAll("-", ""))
@@ -108,9 +125,22 @@ async function route(request, response) {
   const url = new URL(request.url, `http://${request.headers.host}`);
   try {
     if (request.method === "POST" && url.pathname === "/api/pair/create") return json(response, 200, createPair());
-    if (request.method === "POST" && url.pathname === "/api/glasses/pair") return json(response, 200, createPair());
+    if (request.method === "POST" && url.pathname === "/api/glasses/pair") {
+      const credentials = await loadCredentials();
+      if (credentials?.deviceId) return json(response, 200, { id: credentials.deviceId, connected: true });
+      const pair = createPair();
+      return json(response, 200, pair);
+    }
+    if (request.method === "GET" && url.pathname === "/api/app-status") {
+      const credentials = await loadCredentials();
+      return json(response, 200, { connected: Boolean(credentials?.deviceId) });
+    }
     if (request.method === "GET" && url.pathname === "/api/pair/status") {
       const pair = pairs.get(url.searchParams.get("id"));
+      const credentials = await loadCredentials();
+      if (credentials?.deviceId === url.searchParams.get("id")) {
+        return json(response, 200, { status: "connected", connected: true });
+      }
       if (!pair) return json(response, 404, { error: "Kopplung nicht gefunden." });
       return json(response, 200, { status: pair.status, code: pair.code, connected: pair.status === "connected" });
     }
@@ -120,6 +150,8 @@ async function route(request, response) {
       if (!pair || Date.now() - pair.createdAt > 10 * 60 * 1000) return json(response, 400, { error: "Code ungültig oder abgelaufen." });
       pair.status = "connected";
       pair.credentials = await authenticate(body);
+      pair.credentials.deviceId = pair.id;
+      cachedCredentials = pair.credentials;
       await saveCredentials(pair.credentials);
       return json(response, 200, { connected: true });
     }
@@ -131,6 +163,8 @@ async function route(request, response) {
       } catch (error) {
         if (!credentials.password) throw error;
         const renewed = await authenticate(credentials);
+        renewed.deviceId = credentials.deviceId;
+        cachedCredentials = renewed;
         await saveCredentials(renewed);
         return json(response, 200, { entries: await timetable(renewed) });
       }

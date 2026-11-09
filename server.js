@@ -5,6 +5,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { WebUntis } from "webuntis";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(root, "public");
@@ -102,64 +103,35 @@ async function authenticate({ username, password, school = "ggb", baseUrl = "htt
   if (!username || !password) throw new Error("Benutzername und Passwort sind erforderlich.");
   username = username.trim();
   const cleanBaseUrl = baseUrl.replace(/\/+$/, "");
-  const result = await webUntisCall({ baseUrl: cleanBaseUrl, school }, "authenticate", {
-    user: username, password, client: "webuntis-glasses"
-  });
-  return {
-    baseUrl: cleanBaseUrl,
-    school,
-    username,
-    password,
-    sessionId: result.sessionId,
-    jsessionId: result.jsessionId || result.sessionId,
-    personId: result.personId ?? result.userId,
-    personType: result.personType ?? 5,
-    role: result.role
-  };
+  const client = new WebUntis(school, username, password, new URL(cleanBaseUrl).hostname);
+  await client.login();
+  return { baseUrl: cleanBaseUrl, school, username, password };
 }
 
 async function timetable(credentials) {
   const now = new Date();
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 7);
-  const startIso = start.toISOString().slice(0, 10);
-  const endIso = end.toISOString().slice(0, 10);
-  const startDate = Number(startIso.replaceAll("-", ""));
-  const endDate = Number(endIso.replaceAll("-", ""));
-  try {
-    return await webUntisCall(credentials, "getTimetable", {
-      options: {
-        id: Date.now(),
-        element: { id: credentials.personId, type: credentials.personType || 5, keyType: "id" },
-        startDate,
-        endDate,
-        showInfo: true,
-        showSubstText: true,
-        showBooking: false,
-        showLsText: true,
-        showStudentgroup: true,
-        showLsNumber: true,
-        klasseFields: ["id", "name", "longname", "externalkey"],
-        roomFields: ["id", "name", "longname", "externalkey"],
-        subjectFields: ["id", "name", "longname", "externalkey"],
-        teacherFields: ["id", "name", "longname", "externalkey"]
-      }
-    });
-  } catch (error) {
-    if (error.webUntisCode !== -32601) throw error;
-    const legacyType = { 1: "CLASS", 2: "TEACHER", 3: "SUBJECT", 4: "ROOM", 5: "STUDENT" }[credentials.personType || 5] || "STUDENT";
-    const result = await webUntisCall(credentials, "getTimetable2017", {
-      id: credentials.personId,
-      type: legacyType,
-      startDate: startIso,
-      endDate: endIso,
-      masterDataTimestamp: 0,
-      timetableTimestamp: 0,
-      timetableTimestamps: [0, 0, 0, 0, 0, 0, 0]
-    });
-    if (Array.isArray(result)) return result;
-    return result?.periods || result?.timetable || [];
-  }
+  const client = new WebUntis(
+    credentials.school,
+    credentials.username,
+    credentials.password,
+    new URL(credentials.baseUrl).hostname
+  );
+  await client.login();
+  const lessons = await client.getOwnTimetableForRange(start, end);
+  return lessons.map((lesson) => ({
+    date: lesson.date,
+    startTime: lesson.startTime,
+    endTime: lesson.endTime,
+    subjects: lesson.su || [],
+    rooms: lesson.ro || [],
+    teachers: lesson.te || [],
+    classes: lesson.kl || [],
+    info: lesson.info,
+    substitution: lesson.substText,
+    cancelled: lesson.code === "cancelled"
+  }));
 }
 
 async function route(request, response) {

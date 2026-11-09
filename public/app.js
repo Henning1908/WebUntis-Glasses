@@ -50,7 +50,7 @@ pairForm.addEventListener("submit", async (event) => {
   try {
     await api("/api/pair/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
     pairMessage.className = "message ok";
-    pairMessage.textContent = "Erfolgreich gekoppelt. Zugang bleibt lokal verschlüsselt gespeichert.";
+    pairMessage.textContent = "Profil übertragen. Die Brille kann jetzt selbstständig auf den Stundenplan zugreifen.";
     await loadTimetable();
   } catch (error) { pairMessage.className = "message error"; pairMessage.textContent = error.message; }
 });

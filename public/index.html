@@ -8,11 +8,11 @@
 </head>
 <body>
   <main>
-    <header><span class="eyebrow">PHONE → META DISPLAY</span><h1>WebUntis Glasses</h1><p>Das Handy hält die Verbindung, die Brille zeigt deinen Stundenplan.</p></header>
+    <header><span class="eyebrow">PC / HANDY → META DISPLAY</span><h1>WebUntis Glasses</h1><p>Einmal Profil übertragen. Danach läuft die Brille selbstständig.</p></header>
     <section class="grid">
       <article class="card">
-        <div class="card-title"><span>01</span><h2>Brille koppeln</h2></div>
-        <p>Du kannst diese Seite auf dem PC oder Handy nutzen. Die verschlüsselte Sitzung wird zentral gespeichert, deshalb bleibt die Verbindung auf allen Geräten erhalten.</p>
+        <div class="card-title"><span>01</span><h2>Profil an Brille senden</h2></div>
+        <p>Öffne diese Seite auf dem PC oder Handy, gib den Code der Brille ein und sende die WebUntis-Anmeldung. Das Profil wird zentral verschlüsselt gespeichert; PC und Handy müssen danach nicht offen bleiben.</p>
         <form id="pair-form">
           <label for="code">Verbindungscode</label>
           <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000 000" required>
@@ -24,13 +24,13 @@
           <input id="username" name="username" autocomplete="username" required>
           <label for="password">WebUntis Passwort</label>
           <input id="password" name="password" type="password" autocomplete="current-password" required>
-          <button id="pair-submit">Koppeln und anmelden</button>
+          <button id="pair-submit">Profil übertragen und anmelden</button>
           <button id="disconnect" class="secondary" type="button">Verbindung trennen</button>
         </form>
         <p id="pair-message" class="message"></p>
       </article>
       <article class="card glasses">
-        <div class="card-title"><span>02</span><h2>Brillenansicht</h2></div>
+        <div class="card-title"><span>02</span><h2>Brille empfängt Profil</h2></div>
         <div class="glasses-screen">
           <span class="status-dot"></span><span id="glass-status">Warte auf Kopplung</span>
           <strong id="next-subject">—</strong>

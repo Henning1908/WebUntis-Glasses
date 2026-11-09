@@ -30,7 +30,7 @@ Meta Display Glasses ── eigene Gerätekennung ─┘
 ```
 
 - `public/glasses.html`: reduzierte Brillenansicht und Code-Erzeugung
-- `public/index.html`: Handy-Kopplung, Login und Stundenplan
+- `public/index.html`: PC-/Handy-Einrichtung, Profilübertragung und Stundenplan
 - `server.js`: Pairing, verschlüsselte Speicherung und WebUntis-API
 - `render.yaml`: Ein-Klick-Konfiguration für Render
 

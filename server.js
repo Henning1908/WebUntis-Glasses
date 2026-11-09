@@ -186,6 +186,13 @@ async function route(request, response) {
       if (!pair) return json(response, 404, { error: "Kopplung nicht gefunden." });
       return json(response, 200, { status: pair.status, code: pair.code, connected: pair.status === "connected" });
     }
+    if (request.method === "GET" && url.pathname === "/api/glasses/status") {
+      const credentials = await loadCredentials();
+      const deviceId = url.searchParams.get("deviceId");
+      return json(response, 200, {
+        connected: Boolean(credentials?.deviceId && deviceId && credentials.deviceId === deviceId)
+      });
+    }
     if (request.method === "POST" && url.pathname === "/api/pair/claim") {
       const body = await readJson(request);
       const pair = [...pairs.values()].find((item) => item.code === String(body.code));
@@ -200,6 +207,24 @@ async function route(request, response) {
     if (request.method === "GET" && url.pathname === "/api/timetable") {
       const credentials = await loadCredentials();
       if (!credentials) return json(response, 401, { error: "Noch nicht mit WebUntis verbunden." });
+      const includePast = url.searchParams.get("includePast") === "1";
+      try {
+        return json(response, 200, { entries: await timetable(credentials, includePast) });
+      } catch (error) {
+        if (!credentials.password) throw error;
+        const renewed = await authenticate(credentials);
+        renewed.deviceId = credentials.deviceId;
+        cachedCredentials = renewed;
+        await saveCredentials(renewed);
+        return json(response, 200, { entries: await timetable(renewed, includePast) });
+      }
+    }
+    if (request.method === "GET" && url.pathname === "/api/glasses/timetable") {
+      const credentials = await loadCredentials();
+      const deviceId = url.searchParams.get("deviceId");
+      if (!credentials || !deviceId || credentials.deviceId !== deviceId) {
+        return json(response, 401, { error: "Brillengerät nicht registriert." });
+      }
       const includePast = url.searchParams.get("includePast") === "1";
       try {
         return json(response, 200, { entries: await timetable(credentials, includePast) });

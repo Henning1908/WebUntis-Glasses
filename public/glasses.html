@@ -62,8 +62,18 @@
       var touchStartX = 0;
       var pointerStartX = 0;
       var pointerActive = false;
+      var lastTimetable = null;
+      var retryTimer = null;
       var savedId = window.localStorage ? window.localStorage.getItem("webuntis-glasses-device") : null;
       function error(message) { state.innerHTML = message; state.className = "message error"; }
+      function showRetry(message) {
+        state.innerHTML = message;
+        state.className = "muted";
+        if (lastTimetable) {
+          showNext(lastTimetable.next);
+          buildDayGroups(lastTimetable.all);
+        }
+      }
       function text(items, fallback) {
         return items && items.length ? items.map(function (item) { return item.name; }).join(", ") : fallback;
       }
@@ -172,22 +182,37 @@
       };
       function checkPair() {
         if (!pair) return;
-        fetch("/api/pair/status?id=" + encodeURIComponent(pair.id))
+        fetch("/api/glasses/status?deviceId=" + encodeURIComponent(pair.id))
           .then(function (response) { return response.json(); })
           .then(function (current) {
-            if (!current.connected) return null;
+            if (!current.connected) {
+              showRetry("Gerät wartet auf den Server …");
+              return null;
+            }
             showConnected();
             return Promise.all([
-              fetch("/api/timetable").then(function (response) { return response.json(); }),
-              fetch("/api/timetable?includePast=1").then(function (response) { return response.json(); })
+              fetch("/api/glasses/timetable?deviceId=" + encodeURIComponent(pair.id)).then(function (response) {
+                if (!response.ok) throw new Error("Stundenplan momentan nicht erreichbar.");
+                return response.json();
+              }),
+              fetch("/api/glasses/timetable?deviceId=" + encodeURIComponent(pair.id) + "&includePast=1").then(function (response) {
+                if (!response.ok) throw new Error("Tagesplan momentan nicht erreichbar.");
+                return response.json();
+              })
             ]);
           })
           .then(function (data) {
             if (!data) return;
-            showNext(data[0].entries || []);
-            buildDayGroups(data[1].entries || []);
+            lastTimetable = { next: data[0].entries || [], all: data[1].entries || [] };
+            showNext(lastTimetable.next);
+            buildDayGroups(lastTimetable.all);
+            state.innerHTML = "Direkt verbunden";
           })
-          .catch(function (reason) { error(reason.message); });
+          .catch(function (reason) {
+            showRetry("Verbindung wird automatisch wiederhergestellt …");
+            if (retryTimer) clearTimeout(retryTimer);
+            retryTimer = setTimeout(checkPair, 5000);
+          });
       }
       if (savedId) {
         pair = { id: savedId, connected: true };
@@ -247,7 +272,7 @@
             code.innerHTML = result.code.substr(0, 3) + " " + result.code.substr(3);
             state.innerHTML = "Code am PC eingeben ...";
           }
-          setInterval(checkPair, 5000);
+          setInterval(checkPair, 30000);
         })
         .catch(function (reason) { error(reason.message); });
     }());

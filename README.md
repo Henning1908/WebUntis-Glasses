@@ -24,9 +24,9 @@ Login-Anfrage auch mit einer anderen WebUntis-Instanz verwendet werden.
 ## Architektur
 
 ```text
-Handy (Sitzung + WebUntis) ── HTTPS ── Node.js server ── WebUntis
+PC oder Handy (nur Einrichtung) ── HTTPS ── Node.js server ── WebUntis
                                       │
-Meta Display Glasses ─────────────────┘
+Meta Display Glasses ── eigene Gerätekennung ─┘
 ```
 
 - `public/glasses.html`: reduzierte Brillenansicht und Code-Erzeugung
@@ -34,11 +34,12 @@ Meta Display Glasses ─────────────────┘
 - `server.js`: Pairing, verschlüsselte Speicherung und WebUntis-API
 - `render.yaml`: Ein-Klick-Konfiguration für Render
 
-Die zentrale Server-Sitzung ist die dauerhafte Steuerzentrale. PC, Handy und
-Brille greifen auf dieselbe verschlüsselte Sitzung zu. Die Brille speichert
-keine WebUntis-Zugangsdaten; eine Web-App auf der Brille hat keinen verlässlichen
-eigenen Dateispeicher. Auf Render wird dafür ein persistenter Datenträger
-verwendet, damit ein Neustart die Verbindung nicht löscht.
+Die zentrale Server-Sitzung ist die dauerhafte Steuerzentrale. PC und Handy
+werden nur für die Einrichtung benötigt. Danach fragt die Brille den Server
+direkt über ihre eigene Gerätekennung ab und benötigt keine aktive Verbindung
+zu PC oder Handy. Die Brille speichert keine WebUntis-Zugangsdaten; eine
+Web-App auf der Brille hat keinen verlässlichen eigenen Dateispeicher. Auf
+Render wird dafür ein persistenter Datenträger verwendet.
 
 ## Schnellstart lokal
 

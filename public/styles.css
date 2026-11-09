@@ -10,3 +10,18 @@ button { width: 100%; border: 0; border-radius: 10px; background: #ff6a35; color
 .entry { display: grid; grid-template-columns: 90px 1fr auto; gap: 14px; padding: 15px 0; border-bottom: 1px solid #2d3037; align-items: center; } .entry:last-child { border-bottom: 0; } .entry time { color: #ff9a76; font-variant-numeric: tabular-nums; } .entry strong { display: block; } .entry small { color: #a7abb4; } .muted { color: #777d88 !important; }
 @media (max-width: 700px) { main { padding: 32px 0; } .grid { grid-template-columns: 1fr; } .entry { grid-template-columns: 72px 1fr; } .entry small { grid-column: 2; } }
 .glasses-app { max-width: 520px; text-align: center; } .glasses-app p { color: #a7abb4; line-height: 1.5; } .pair-code { margin: 40px 0 18px; font-size: clamp(52px, 13vw, 90px); letter-spacing: .12em; font-weight: 900; color: #ff6a35; font-variant-numeric: tabular-nums; } .glasses-app .card { text-align: left; margin-top: 32px; }
+.glasses-page { background: transparent; color: #f5f7fa; font-family: Inter, ui-sans-serif, system-ui, sans-serif; min-height: 100vh; }
+.glasses-page .glasses-app { width: min(460px, calc(100% - 28px)); margin: 0 auto; padding: 18px 0 28px; }
+.glasses-page .glasses-brand { color: #ff6a35; font-size: 11px; font-weight: 800; letter-spacing: .2em; }
+.glasses-page h1 { color: #fff; font-size: clamp(24px, 7vw, 38px); letter-spacing: -.04em; line-height: 1; margin: 12px 0 8px; }
+.glasses-page p { color: rgba(245,247,250,.72); font-size: 15px; margin: 8px 0; }
+.glasses-page .pair-code { margin: 25px 0 12px; color: #fff; font-size: clamp(54px, 16vw, 82px); letter-spacing: .1em; line-height: .95; text-shadow: 0 2px 18px rgba(0,0,0,.45); }
+.glasses-page #pair-state { color: rgba(245,247,250,.8); font-size: 14px; }
+.glasses-page .glasses-disconnect { width: auto; margin: 14px auto 0; padding: 8px 13px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: rgba(0,0,0,.18); color: rgba(255,255,255,.72); font-size: 12px; font-weight: 600; }
+.glasses-page .glasses-timetable { margin-top: 22px; padding: 15px 17px; border: 1px solid rgba(255,255,255,.2); border-radius: 18px; background: rgba(10,12,16,.48); backdrop-filter: blur(8px); text-align: left; }
+.glasses-page .glasses-timetable .card-title { margin-bottom: 5px; }
+.glasses-page .glasses-timetable h2 { color: #fff; font-size: 17px; }
+.glasses-page .glasses-timetable .entry { grid-template-columns: 58px 1fr; gap: 10px; padding: 10px 0; border-color: rgba(255,255,255,.13); }
+.glasses-page .glasses-timetable .entry time { color: #ff9a76; font-size: 13px; }
+.glasses-page .glasses-timetable .entry strong { color: #fff; font-size: 15px; }
+.glasses-page .glasses-timetable .entry small { color: rgba(245,247,250,.65); font-size: 12px; }

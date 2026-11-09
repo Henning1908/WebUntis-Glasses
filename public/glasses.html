@@ -7,15 +7,15 @@
   <link rel="stylesheet" href="/styles.css">
   <link rel="manifest" href="/.well-known/meta-wearables-manifest.json">
 </head>
-<body style="background:#ffffff;color:#111111;margin:0;font-family:Arial,sans-serif;">
-  <main class="glasses-app" style="max-width:520px;margin:0 auto;padding:24px;text-align:center;">
-    <span style="font-size:14px;font-weight:bold;">WEBUNTIS GLASSES</span>
-    <h1 style="font-size:32px;color:#111111;">Mit PC verbinden</h1>
+<body class="glasses-page">
+  <main class="glasses-app">
+    <span class="glasses-brand">WEBUNTIS</span>
+    <h1>Mit PC verbinden</h1>
     <p>Gib diesen Code auf dem PC ein:</p>
-    <div id="pair-code" class="pair-code" style="margin:32px 0;font-size:64px;line-height:1;font-weight:bold;letter-spacing:8px;color:#e54b16;">------</div>
-    <p id="pair-state" class="muted" style="font-size:18px;">Verbindung wird vorbereitet ...</p>
-    <button id="disconnect" type="button" style="background:#6b2737;color:#fff;border:0;border-radius:8px;padding:12px 18px;font-size:16px;">Verbindung trennen</button>
-    <section id="glass-timetable" class="card" hidden>
+    <div id="pair-code" class="pair-code">------</div>
+    <p id="pair-state" class="muted">Verbindung wird vorbereitet ...</p>
+    <button id="disconnect" class="glasses-disconnect" type="button">Verbindung trennen</button>
+    <section id="glass-timetable" class="glasses-timetable" hidden>
       <div class="card-title"><span>HEUTE</span><h2>Stundenplan</h2></div>
       <div id="glass-entries"></div>
     </section>

@@ -120,6 +120,17 @@ async function timetable(credentials) {
   );
   await client.login();
   const lessons = await client.getOwnTimetableForRange(start, end);
+  const berlinParts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(now).filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
+  const currentDate = Number(`${berlinParts.year}${berlinParts.month}${berlinParts.day}`);
+  const currentTime = Number(`${berlinParts.hour}${berlinParts.minute}`);
   return lessons.map((lesson) => ({
     date: lesson.date,
     startTime: lesson.startTime,
@@ -131,7 +142,17 @@ async function timetable(credentials) {
     info: lesson.info,
     substitution: lesson.substText,
     cancelled: lesson.code === "cancelled"
-  }));
+  })).filter((lesson) => {
+    const lessonDate = Number(String(lesson.date || "").replaceAll("-", ""));
+    const lessonEnd = Number(String(lesson.endTime || "0").padStart(4, "0"));
+    return lessonDate > currentDate || (lessonDate === currentDate && lessonEnd > currentTime);
+  }).sort((left, right) => {
+    const dateDifference = Number(String(left.date || "").replaceAll("-", "")) -
+      Number(String(right.date || "").replaceAll("-", ""));
+    if (dateDifference !== 0) return dateDifference;
+    return Number(String(left.startTime || "0").padStart(4, "0")) -
+      Number(String(right.startTime || "0").padStart(4, "0"));
+  });
 }
 
 async function route(request, response) {

@@ -55,6 +55,27 @@ pairForm.addEventListener("submit", async (event) => {
   } catch (error) { pairMessage.className = "message error"; pairMessage.textContent = error.message; }
 });
 document.querySelector("#refresh").addEventListener("click", loadTimetable);
+document.querySelector("#disconnect").addEventListener("click", async () => {
+  const button = document.querySelector("#disconnect");
+  button.disabled = true;
+  try {
+    await api("/api/disconnect", { method: "POST" });
+    pairForm.reset();
+    document.querySelector("#baseUrl").value = "https://ggb.webuntis.com";
+    document.querySelector("#school").value = "ggb";
+    pairMessage.className = "message ok";
+    pairMessage.textContent = "Verbindung getrennt. Du kannst jetzt neu koppeln.";
+    glassStatus.textContent = "Nicht verbunden";
+    nextSubject.textContent = "—";
+    nextDetails.textContent = "Öffne die Web-App auf der Brille neu.";
+    entries.innerHTML = '<p class="muted">Noch keine Daten geladen.</p>';
+  } catch (error) {
+    pairMessage.className = "message error";
+    pairMessage.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
 loadExistingConnection().catch((error) => {
   pairMessage.className = "message error";
   pairMessage.textContent = error.message;

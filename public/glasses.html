@@ -13,6 +13,7 @@
     <p>Gib diesen Code auf dem PC ein:</p>
     <div id="pair-code" class="pair-code" style="margin:32px 0;font-size:64px;line-height:1;font-weight:bold;letter-spacing:8px;color:#e54b16;">------</div>
     <p id="pair-state" class="muted" style="font-size:18px;">Verbindung wird vorbereitet ...</p>
+    <button id="disconnect" type="button" style="background:#6b2737;color:#fff;border:0;border-radius:8px;padding:12px 18px;font-size:16px;">Verbindung trennen</button>
     <section id="glass-timetable" class="card" hidden>
       <div class="card-title"><span>HEUTE</span><h2>Stundenplan</h2></div>
       <div id="glass-entries"></div>
@@ -24,9 +25,21 @@
       var state = document.getElementById("pair-state");
       var timetable = document.getElementById("glass-timetable");
       var output = document.getElementById("glass-entries");
+      var disconnectButton = document.getElementById("disconnect");
       var pair = null;
       var savedId = window.localStorage ? window.localStorage.getItem("webuntis-glasses-device") : null;
       function error(message) { state.innerHTML = message; state.className = "message error"; }
+      disconnectButton.onclick = function () {
+        fetch("/api/disconnect", { method: "POST" })
+          .then(function () {
+            if (window.localStorage) window.localStorage.removeItem("webuntis-glasses-device");
+            pair = null;
+            code.innerHTML = "------";
+            state.innerHTML = "Verbindung getrennt. Seite neu laden.";
+            timetable.hidden = true;
+          })
+          .catch(function (reason) { error(reason.message); });
+      };
       function checkPair() {
         if (!pair) return;
         fetch("/api/pair/status?id=" + encodeURIComponent(pair.id))

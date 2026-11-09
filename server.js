@@ -135,6 +135,13 @@ async function route(request, response) {
       const credentials = await loadCredentials();
       return json(response, 200, { connected: Boolean(credentials?.deviceId) });
     }
+    if (request.method === "POST" && url.pathname === "/api/disconnect") {
+      cachedCredentials = null;
+      if (existsSync(credentialsFile)) {
+        await writeFile(credentialsFile, "", { mode: 0o600 });
+      }
+      return json(response, 200, { connected: false });
+    }
     if (request.method === "GET" && url.pathname === "/api/pair/status") {
       const pair = pairs.get(url.searchParams.get("id"));
       const credentials = await loadCredentials();

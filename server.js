@@ -122,8 +122,10 @@ async function timetable(credentials) {
   const now = new Date();
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 7);
-  const startDate = Number(start.toISOString().slice(0, 10).replaceAll("-", ""));
-  const endDate = Number(end.toISOString().slice(0, 10).replaceAll("-", ""));
+  const startIso = start.toISOString().slice(0, 10);
+  const endIso = end.toISOString().slice(0, 10);
+  const startDate = Number(startIso.replaceAll("-", ""));
+  const endDate = Number(endIso.replaceAll("-", ""));
   try {
     return await webUntisCall(credentials, "getTimetable", {
       options: {
@@ -138,12 +140,18 @@ async function timetable(credentials) {
     });
   } catch (error) {
     if (error.webUntisCode !== -32601) throw error;
-    return webUntisCall(credentials, "getTimetable2017", {
+    const legacyType = { 1: "CLASS", 2: "TEACHER", 3: "SUBJECT", 4: "ROOM", 5: "STUDENT" }[credentials.personType || 5] || "STUDENT";
+    const result = await webUntisCall(credentials, "getTimetable2017", {
       id: credentials.personId,
-      type: credentials.personType || 5,
-      startDate,
-      endDate
+      type: legacyType,
+      startDate: startIso,
+      endDate: endIso,
+      masterDataTimestamp: 0,
+      timetableTimestamp: 0,
+      timetableTimestamps: [0, 0, 0, 0, 0, 0, 0]
     });
+    if (Array.isArray(result)) return result;
+    return result?.periods || result?.timetable || [];
   }
 }
 

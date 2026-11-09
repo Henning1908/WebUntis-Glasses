@@ -161,8 +161,11 @@ async function route(request, response) {
   try {
     if (request.method === "POST" && url.pathname === "/api/pair/create") return json(response, 200, createPair());
     if (request.method === "POST" && url.pathname === "/api/glasses/pair") {
+      const body = await readJson(request);
       const credentials = await loadCredentials();
-      if (credentials?.deviceId) return json(response, 200, { id: credentials.deviceId, connected: true });
+      if (credentials?.deviceId && body.deviceId === credentials.deviceId) {
+        return json(response, 200, { id: credentials.deviceId, connected: true });
+      }
       const pair = createPair();
       return json(response, 200, pair);
     }

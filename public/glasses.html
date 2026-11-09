@@ -257,7 +257,11 @@
           moveDay(event.changedTouches[0].clientX - touchStartX);
         }, { passive: true });
       }
-      fetch("/api/glasses/pair", { method: "POST" })
+      fetch("/api/glasses/pair", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId: savedId })
+      })
         .then(function (response) { return response.json(); })
         .then(function (result) {
           if (!result.id) throw new Error("Keine Geräteverbindung erhalten.");
@@ -266,9 +270,12 @@
             if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);
             showConnected();
             checkPair();
-          } else if (!savedId) {
+          } else {
             pair = result;
-            if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);
+            if (window.localStorage) {
+              window.localStorage.removeItem("webuntis-glasses-device");
+              window.localStorage.setItem("webuntis-glasses-device", result.id);
+            }
             code.innerHTML = result.code.substr(0, 3) + " " + result.code.substr(3);
             state.innerHTML = "Code am PC eingeben ...";
           }

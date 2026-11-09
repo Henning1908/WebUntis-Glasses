@@ -105,6 +105,7 @@ async function authenticate({ username, password, school = "ggb", baseUrl = "htt
     password,
     sessionId: result.sessionId,
     personId: result.personId ?? result.userId,
+    personType: result.personType ?? 5,
     role: result.role
   };
 }
@@ -113,9 +114,9 @@ async function timetable(credentials) {
   const now = new Date();
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 7);
-  return webUntisCall(credentials, "getOwnTimetable", {
-    personId: credentials.personId,
-    klasseFields: ["name"],
+  return webUntisCall(credentials, "getTimetable", {
+    id: credentials.personId,
+    type: credentials.personType || 5,
     startDate: Number(start.toISOString().slice(0, 10).replaceAll("-", "")),
     endDate: Number(end.toISOString().slice(0, 10).replaceAll("-", ""))
   });

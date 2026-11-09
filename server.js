@@ -129,13 +129,20 @@ async function timetable(credentials) {
   try {
     return await webUntisCall(credentials, "getTimetable", {
       options: {
+        id: Date.now(),
         element: { id: credentials.personId, type: credentials.personType || 5, keyType: "id" },
         startDate,
         endDate,
         showInfo: true,
         showSubstText: true,
         showBooking: false,
-        hideErrors: true
+        showLsText: true,
+        showStudentgroup: true,
+        showLsNumber: true,
+        klasseFields: ["id", "name", "longname", "externalkey"],
+        roomFields: ["id", "name", "longname", "externalkey"],
+        subjectFields: ["id", "name", "longname", "externalkey"],
+        teacherFields: ["id", "name", "longname", "externalkey"]
       }
     });
   } catch (error) {

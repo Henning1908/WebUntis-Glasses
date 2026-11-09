@@ -182,7 +182,12 @@ async function route(request, response) {
     if (request.method === "POST" && url.pathname === "/api/pair/create") return json(response, 200, createPair());
     if (request.method === "POST" && url.pathname === "/api/glasses/pair") {
       const body = await readJson(request);
-      const credentials = await loadCredentials();
+      let credentials = await loadCredentials();
+      if (!credentials?.deviceId && body.profile?.deviceId && body.profile.deviceId === body.deviceId) {
+        credentials = await authenticate(body.profile);
+        credentials.deviceId = body.profile.deviceId;
+        await saveCredentials(credentials);
+      }
       if (credentials?.deviceId && (!body.deviceId || body.deviceId === credentials.deviceId)) {
         return json(response, 200, {
           id: credentials.deviceId,

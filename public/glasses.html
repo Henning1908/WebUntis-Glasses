@@ -278,7 +278,10 @@
       fetch("/api/glasses/pair", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId: savedId })
+        body: JSON.stringify({
+          deviceId: savedId,
+          profile: savedProfile ? JSON.parse(savedProfile) : null
+        })
       })
         .then(function (response) { return response.json(); })
         .then(function (result) {

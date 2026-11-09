@@ -41,6 +41,11 @@ zu PC oder Handy. Die Brille speichert keine WebUntis-Zugangsdaten; eine
 Web-App auf der Brille hat keinen verlässlichen eigenen Dateispeicher. Auf
 Render wird dafür ein persistenter Datenträger verwendet.
 
+Wenn der Browser der Brille seine lokale Gerätekennung beim Schließen verliert,
+ordnet der Server eine neue Brilleninstanz automatisch wieder dem bereits
+gespeicherten Profil zu. Eine neue Kopplung ist nur nach dem ausdrücklichen
+Trennen der Verbindung erforderlich.
+
 ## Schnellstart lokal
 
 Voraussetzung: Node.js 20 oder neuer.

@@ -163,7 +163,7 @@ async function route(request, response) {
     if (request.method === "POST" && url.pathname === "/api/glasses/pair") {
       const body = await readJson(request);
       const credentials = await loadCredentials();
-      if (credentials?.deviceId && body.deviceId === credentials.deviceId) {
+      if (credentials?.deviceId) {
         return json(response, 200, { id: credentials.deviceId, connected: true });
       }
       const pair = createPair();

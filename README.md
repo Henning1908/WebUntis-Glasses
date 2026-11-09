@@ -16,6 +16,10 @@ die nächsten Stunden mit Fach, Uhrzeit und Raum.
 Der Prototyp ist auf die WebUntis-Schule `ggb` voreingestellt, kann aber über die
 Login-Anfrage auch mit einer anderen WebUntis-Instanz verwendet werden.
 
+> **Hinweis:** Der aktuelle Prototyp verwendet den normalen WebUntis-Benutzernamen
+> und das normale WebUntis-Passwort. Der WebUntis-Mobile-QR-Schlüssel ist kein
+> Passwort und wird von dieser Version noch nicht als Login verwendet.
+
 ## Architektur
 
 ```text

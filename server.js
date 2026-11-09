@@ -73,12 +73,18 @@ async function webUntisCall(credentials, method, params) {
   });
   if (!response.ok) throw new Error(`WebUntis antwortet mit HTTP ${response.status}`);
   const payload = await response.json();
-  if (payload.error) throw new Error(payload.error.message || "WebUntis-Anfrage fehlgeschlagen");
+  if (payload.error) {
+    const detail = payload.error.message || payload.error.data || "WebUntis-Anfrage fehlgeschlagen";
+    const error = new Error(String(detail));
+    error.webUntisCode = payload.error.code;
+    throw error;
+  }
   return payload.result;
 }
 
 async function authenticate({ username, password, school = "ggb", baseUrl = "https://ggb.webuntis.com" }) {
   if (!username || !password) throw new Error("Benutzername und Passwort sind erforderlich.");
+  username = username.trim();
   const cleanBaseUrl = baseUrl.replace(/\/+$/, "");
   const result = await webUntisCall({ baseUrl: cleanBaseUrl, school }, "authenticate", {
     user: username, password, client: "webuntis-glasses"
@@ -140,7 +146,10 @@ async function route(request, response) {
     return json(response, 404, { error: "Nicht gefunden." });
   } catch (error) {
     console.error(error);
-    return json(response, 502, { error: error.message || "Unbekannter Fehler." });
+    const message = error.webUntisCode === -1
+      ? "WebUntis lehnt die Anmeldung ab. Prüfe Benutzername, Passwort und dass du nicht den WebUntis-QR-Schlüssel als Passwort eingibst."
+      : error.message || "Unbekannter Fehler.";
+    return json(response, 502, { error: message });
   }
 }
 

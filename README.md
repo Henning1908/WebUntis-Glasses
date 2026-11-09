@@ -8,7 +8,7 @@
 
 ## Was ist das?
 
-WebUntis Glasses verbindet eine Web-App auf der Brille mit einer PC-Ansicht.
+WebUntis Glasses verbindet eine Web-App auf der Brille mit einer Handy-Ansicht.
 Die Brille zeigt beim Öffnen einen 6-stelligen Code. Auf dem PC wird dieser Code
 zusammen mit den WebUntis-Zugangsdaten bestätigt. Danach zeigt die Brillenansicht
 die nächsten Stunden mit Fach, Uhrzeit und Raum.
@@ -24,15 +24,20 @@ Login-Anfrage auch mit einer anderen WebUntis-Instanz verwendet werden.
 ## Architektur
 
 ```text
-Meta Display Glasses  ── HTTPS ──┐
-                                 ├── Node.js server ── WebUntis JSON-RPC
-PC browser          ── HTTPS ────┘
+Handy (Sitzung + WebUntis) ── HTTPS ── Node.js server ── WebUntis
+                                      │
+Meta Display Glasses ─────────────────┘
 ```
 
 - `public/glasses.html`: reduzierte Brillenansicht und Code-Erzeugung
-- `public/index.html`: PC-Kopplung, Login und Stundenplan
+- `public/index.html`: Handy-Kopplung, Login und Stundenplan
 - `server.js`: Pairing, verschlüsselte Speicherung und WebUntis-API
 - `render.yaml`: Ein-Klick-Konfiguration für Render
+
+Das Handy ist die dauerhafte Steuerzentrale. Nach der ersten Anmeldung wird die
+Sitzung lokal im Browser des Handys gespeichert und beim Öffnen automatisch auf
+dem Server wiederhergestellt. Solange die Handy-Seite geöffnet ist, sendet sie
+regelmäßig einen Heartbeat; die Brille benötigt keinen PC.
 
 ## Schnellstart lokal
 

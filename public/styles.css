@@ -33,6 +33,10 @@ button { width: 100%; border: 0; border-radius: 10px; background: #ff6a35; color
 .glasses-page .day-entry strong { display: block; color: #fff; font-size: 15px; }
 .glasses-page .day-entry small { display: block; margin-top: 3px; color: rgba(245,247,250,.65); font-size: 12px; line-height: 1.25; }
 .glasses-page .day-empty { color: rgba(245,247,250,.7); font-size: 14px; }
+.glasses-page .day-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.glasses-page .day-controls button { width: 48px; height: 36px; margin: 0; padding: 0; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1); color: #fff; font-size: 22px; line-height: 1; }
+.glasses-page .day-controls button:disabled { opacity: .25; }
+.glasses-page #day-position { color: rgba(245,247,250,.55); font-size: 12px; }
 .glasses-page .swipe-hint { margin-top: 12px; color: rgba(245,247,250,.45); font-size: 11px; text-align: center; }
 .glasses-page .glasses-timetable { margin-top: 22px; padding: 15px 17px; border: 1px solid rgba(255,255,255,.2); border-radius: 18px; background: rgba(10,12,16,.48); backdrop-filter: blur(8px); text-align: left; }
 .glasses-page .glasses-timetable .card-title { margin-bottom: 5px; }

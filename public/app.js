@@ -34,6 +34,19 @@ async function loadTimetable() {
 }
 
 async function loadExistingConnection() {
+  const saved = window.localStorage.getItem("webuntis-phone-session");
+  if (saved) {
+    try {
+      const session = JSON.parse(saved);
+      await api("/api/session/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(session)
+      });
+    } catch (error) {
+      window.localStorage.removeItem("webuntis-phone-session");
+    }
+  }
   const status = await api("/api/app-status");
   if (!status.connected) return false;
   pairMessage.className = "message ok";
@@ -42,13 +55,27 @@ async function loadExistingConnection() {
   return true;
 }
 
+async function keepPhoneSessionAlive() {
+  const saved = window.localStorage.getItem("webuntis-phone-session");
+  if (!saved) return;
+  const session = JSON.parse(saved);
+  await api("/api/session/restore", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(session)
+  });
+}
+
 pairForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   pairMessage.className = "message";
   pairMessage.textContent = "Verbinde mit WebUntis …";
   const form = new FormData(pairForm);
   try {
-    await api("/api/pair/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
+    const session = Object.fromEntries(form);
+    const result = await api("/api/pair/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(session) });
+    session.deviceId = result.deviceId;
+    window.localStorage.setItem("webuntis-phone-session", JSON.stringify(session));
     pairMessage.className = "message ok";
     pairMessage.textContent = "Erfolgreich gekoppelt. Zugang bleibt lokal verschlüsselt gespeichert.";
     await loadTimetable();
@@ -60,6 +87,7 @@ document.querySelector("#disconnect").addEventListener("click", async () => {
   button.disabled = true;
   try {
     await api("/api/disconnect", { method: "POST" });
+    window.localStorage.removeItem("webuntis-phone-session");
     pairForm.reset();
     document.querySelector("#baseUrl").value = "https://ggb.webuntis.com";
     document.querySelector("#school").value = "ggb";
@@ -80,3 +108,12 @@ loadExistingConnection().catch((error) => {
   pairMessage.className = "message error";
   pairMessage.textContent = error.message;
 });
+setInterval(async () => {
+  try {
+    await keepPhoneSessionAlive();
+    await loadTimetable();
+  } catch (error) {
+    pairMessage.className = "message error";
+    pairMessage.textContent = `Handy-Verbindung wartet auf Wiederherstellung: ${error.message}`;
+  }
+}, 5 * 60 * 1000);

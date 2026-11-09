@@ -170,6 +170,13 @@ async function route(request, response) {
       const credentials = await loadCredentials();
       return json(response, 200, { connected: Boolean(credentials?.deviceId) });
     }
+    if (request.method === "POST" && url.pathname === "/api/session/restore") {
+      const body = await readJson(request);
+      const restored = await authenticate(body);
+      restored.deviceId = body.deviceId || randomBytes(18).toString("base64url");
+      await saveCredentials(restored);
+      return json(response, 200, { connected: true, deviceId: restored.deviceId });
+    }
     if (request.method === "POST" && url.pathname === "/api/disconnect") {
       cachedCredentials = null;
       if (existsSync(credentialsFile)) {
@@ -195,7 +202,7 @@ async function route(request, response) {
       pair.credentials.deviceId = pair.id;
       cachedCredentials = pair.credentials;
       await saveCredentials(pair.credentials);
-      return json(response, 200, { connected: true });
+      return json(response, 200, { connected: true, deviceId: pair.id });
     }
     if (request.method === "GET" && url.pathname === "/api/timetable") {
       const credentials = await loadCredentials();

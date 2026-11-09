@@ -29,6 +29,11 @@
         <strong id="day-title">Heute</strong>
       </div>
       <div id="day-entries"></div>
+      <div class="day-controls">
+        <button id="day-back" type="button" aria-label="Vorheriger Tag">←</button>
+        <span id="day-position"></span>
+        <button id="day-forward" type="button" aria-label="Nächster Tag">→</button>
+      </div>
       <div class="swipe-hint">← zurück · weiter →</div>
     </section>
   </main>
@@ -47,6 +52,9 @@
       var day = document.getElementById("glass-day");
       var dayTitle = document.getElementById("day-title");
       var dayEntries = document.getElementById("day-entries");
+      var dayPosition = document.getElementById("day-position");
+      var dayBack = document.getElementById("day-back");
+      var dayForward = document.getElementById("day-forward");
       var disconnectButton = document.getElementById("disconnect");
       var pair = null;
       var dayGroups = [];
@@ -92,6 +100,9 @@
         next.hidden = true;
         day.hidden = false;
         dayTitle.innerHTML = group.key === todayKey() ? "Heute" : formatDate(group.key);
+        dayPosition.innerHTML = (dayIndex + 1) + " / " + dayGroups.length;
+        dayBack.disabled = dayIndex <= 0;
+        dayForward.disabled = dayIndex >= dayGroups.length - 1;
         dayEntries.innerHTML = group.items.length ? group.items.map(function (item) {
           var status = item.cancelled ? " · Entfällt" : (item.substitution || item.info ? " · " + (item.substitution || item.info) : "");
           return "<div class='day-entry'><time>" + formatTime(item.startTime) + "–" + formatTime(item.endTime) + "</time><div><strong>" + text(item.subjects, "Unterricht") + "</strong><small>Raum: " + text(item.rooms, "offen") + status + "</small></div></div>";
@@ -189,6 +200,17 @@
         if (distance < 0 && dayIndex >= 0) dayIndex -= 1;
         renderDay();
       }
+      function changeDay(direction) {
+        if (dayIndex < 0) dayIndex = 0;
+        dayIndex = Math.max(0, Math.min(dayGroups.length - 1, dayIndex + direction));
+        renderDay();
+      }
+      dayBack.onclick = function () { changeDay(-1); };
+      dayForward.onclick = function () { changeDay(1); };
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowRight") changeDay(1);
+        if (event.key === "ArrowLeft") changeDay(-1);
+      });
       if (window.PointerEvent) {
         document.addEventListener("pointerdown", function (event) {
           if (event.pointerType === "touch" || event.pointerType === "pen") {

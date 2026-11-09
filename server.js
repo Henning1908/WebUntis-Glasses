@@ -76,9 +76,16 @@ async function webUntisCall(credentials, method, params) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(credentials.sessionId ? { Cookie: `JSESSIONID=${credentials.sessionId}` } : {})
+      ...(credentials.jsessionId || credentials.sessionId
+        ? { Cookie: `JSESSIONID=${credentials.jsessionId || credentials.sessionId}` }
+        : {})
     },
-    body: JSON.stringify({ id: Date.now(), jsonrpc: "2.0", method, params: credentials.sessionId ? { ...params, sessionId: credentials.sessionId } : params })
+    body: JSON.stringify({
+      id: String(Date.now()),
+      jsonrpc: "2.0",
+      method,
+      params: credentials.sessionId ? { ...params, _: credentials.sessionId } : params
+    })
   });
   if (!response.ok) throw new Error(`WebUntis antwortet mit HTTP ${response.status}`);
   const payload = await response.json();
@@ -104,6 +111,7 @@ async function authenticate({ username, password, school = "ggb", baseUrl = "htt
     username,
     password,
     sessionId: result.sessionId,
+    jsessionId: result.jsessionId || result.sessionId,
     personId: result.personId ?? result.userId,
     personType: result.personType ?? 5,
     role: result.role
@@ -115,10 +123,19 @@ async function timetable(credentials) {
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 7);
   return webUntisCall(credentials, "getTimetable", {
-    id: credentials.personId,
-    type: credentials.personType || 5,
-    startDate: Number(start.toISOString().slice(0, 10).replaceAll("-", "")),
-    endDate: Number(end.toISOString().slice(0, 10).replaceAll("-", ""))
+    options: {
+      element: {
+        id: credentials.personId,
+        type: credentials.personType || 5,
+        keyType: "id"
+      },
+      startDate: Number(start.toISOString().slice(0, 10).replaceAll("-", "")),
+      endDate: Number(end.toISOString().slice(0, 10).replaceAll("-", "")),
+      showInfo: true,
+      showSubstText: true,
+      showBooking: false,
+      hideErrors: true
+    }
   });
 }
 

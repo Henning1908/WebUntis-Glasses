@@ -108,7 +108,7 @@ async function authenticate({ username, password, school = "ggb", baseUrl = "htt
   return { baseUrl: cleanBaseUrl, school, username, password };
 }
 
-async function timetable(credentials) {
+async function timetable(credentials, includePast = false) {
   const now = new Date();
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 7);
@@ -131,7 +131,7 @@ async function timetable(credentials) {
   }).formatToParts(now).filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
   const currentDate = Number(`${berlinParts.year}${berlinParts.month}${berlinParts.day}`);
   const currentTime = Number(`${berlinParts.hour}${berlinParts.minute}`);
-  return lessons.map((lesson) => ({
+  const entries = lessons.map((lesson) => ({
     date: lesson.date,
     startTime: lesson.startTime,
     endTime: lesson.endTime,
@@ -145,7 +145,7 @@ async function timetable(credentials) {
   })).filter((lesson) => {
     const lessonDate = Number(String(lesson.date || "").replaceAll("-", ""));
     const lessonEnd = Number(String(lesson.endTime || "0").padStart(4, "0"));
-    return lessonDate > currentDate || (lessonDate === currentDate && lessonEnd > currentTime);
+    return includePast || lessonDate > currentDate || (lessonDate === currentDate && lessonEnd > currentTime);
   }).sort((left, right) => {
     const dateDifference = Number(String(left.date || "").replaceAll("-", "")) -
       Number(String(right.date || "").replaceAll("-", ""));
@@ -153,6 +153,7 @@ async function timetable(credentials) {
     return Number(String(left.startTime || "0").padStart(4, "0")) -
       Number(String(right.startTime || "0").padStart(4, "0"));
   });
+  return entries;
 }
 
 async function route(request, response) {
@@ -199,15 +200,16 @@ async function route(request, response) {
     if (request.method === "GET" && url.pathname === "/api/timetable") {
       const credentials = await loadCredentials();
       if (!credentials) return json(response, 401, { error: "Noch nicht mit WebUntis verbunden." });
+      const includePast = url.searchParams.get("includePast") === "1";
       try {
-        return json(response, 200, { entries: await timetable(credentials) });
+        return json(response, 200, { entries: await timetable(credentials, includePast) });
       } catch (error) {
         if (!credentials.password) throw error;
         const renewed = await authenticate(credentials);
         renewed.deviceId = credentials.deviceId;
         cachedCredentials = renewed;
         await saveCredentials(renewed);
-        return json(response, 200, { entries: await timetable(renewed) });
+        return json(response, 200, { entries: await timetable(renewed, includePast) });
       }
     }
     if (request.method === "GET") {

@@ -52,6 +52,8 @@
       var dayGroups = [];
       var dayIndex = -1;
       var touchStartX = 0;
+      var pointerStartX = 0;
+      var pointerActive = false;
       var savedId = window.localStorage ? window.localStorage.getItem("webuntis-glasses-device") : null;
       function error(message) { state.innerHTML = message; state.className = "message error"; }
       function text(items, fallback) {
@@ -164,13 +166,15 @@
           .then(function (current) {
             if (!current.connected) return null;
             showConnected();
-            return fetch("/api/timetable");
+            return Promise.all([
+              fetch("/api/timetable").then(function (response) { return response.json(); }),
+              fetch("/api/timetable?includePast=1").then(function (response) { return response.json(); })
+            ]);
           })
-          .then(function (response) { return response ? response.json() : null; })
           .then(function (data) {
             if (!data) return;
-            showNext(data.entries || []);
-            buildDayGroups(data.entries || []);
+            showNext(data[0].entries || []);
+            buildDayGroups(data[1].entries || []);
           })
           .catch(function (reason) { error(reason.message); });
       }
@@ -179,17 +183,33 @@
         showConnected();
         checkPair();
       }
-      document.addEventListener("touchstart", function (event) {
-        if (event.touches && event.touches.length) touchStartX = event.touches[0].clientX;
-      }, { passive: true });
-      document.addEventListener("touchend", function (event) {
-        if (!event.changedTouches || !event.changedTouches.length) return;
-        var distance = event.changedTouches[0].clientX - touchStartX;
+      function moveDay(distance) {
         if (Math.abs(distance) < 45 || !dayGroups.length) return;
         if (distance > 0 && dayIndex < dayGroups.length - 1) dayIndex += 1;
         if (distance < 0 && dayIndex >= 0) dayIndex -= 1;
         renderDay();
-      }, { passive: true });
+      }
+      if (window.PointerEvent) {
+        document.addEventListener("pointerdown", function (event) {
+          if (event.pointerType === "touch" || event.pointerType === "pen") {
+            pointerStartX = event.clientX;
+            pointerActive = true;
+          }
+        });
+        document.addEventListener("pointerup", function (event) {
+          if (!pointerActive) return;
+          pointerActive = false;
+          moveDay(event.clientX - pointerStartX);
+        });
+      } else {
+        document.addEventListener("touchstart", function (event) {
+          if (event.touches && event.touches.length) touchStartX = event.touches[0].clientX;
+        }, { passive: true });
+        document.addEventListener("touchend", function (event) {
+          if (!event.changedTouches || !event.changedTouches.length) return;
+          moveDay(event.changedTouches[0].clientX - touchStartX);
+        }, { passive: true });
+      }
       fetch("/api/glasses/pair", { method: "POST" })
         .then(function (response) { return response.json(); })
         .then(function (result) {

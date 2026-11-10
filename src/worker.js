@@ -151,7 +151,10 @@ async function route(request, env) {
       if (!hasDashboardSession(request, profile) && body.deviceId !== profile?.deviceId) return json({ error: 'Keine Berechtigung zum Trennen der Verbindung.' }, 401)
       await env.DB.prepare('DELETE FROM app_state WHERE id = 1').run()
       await env.DB.prepare('DELETE FROM pairings').run()
-      return new Response(JSON.stringify({ connected: false }), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': 'webuntis_session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Strict' } })
+      const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
+      headers.append('Set-Cookie', 'webuntis_session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Strict')
+      headers.append('Set-Cookie', 'webuntis_device=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Strict')
+      return new Response(JSON.stringify({ connected: false }), { headers })
     }
     if (request.method === 'GET' && url.pathname === '/api/pair/status') {
       const id = url.searchParams.get('id') || ''
@@ -181,10 +184,13 @@ async function route(request, env) {
     if (request.method === 'POST' && url.pathname === '/api/glasses/pair') {
       const body = await readJson(request)
       const profile = await loadProfile(env)
-      if (profile?.deviceId && (!body.deviceId || body.deviceId === profile.deviceId)) {
-        return json({ id: profile.deviceId, connected: true })
+      const cookieId = (request.headers.get('Cookie') || '').match(/(?:^|;\s*)webuntis_device=([^;]+)/)?.[1]
+      const knownId = body.deviceId || cookieId
+      if (profile?.deviceId && knownId === profile.deviceId) {
+        return new Response(JSON.stringify({ id: profile.deviceId, connected: true }), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': `webuntis_device=${profile.deviceId}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict` } })
       }
-      return json(await createPair(env))
+      const pair = await createPair(env)
+      return new Response(JSON.stringify(pair), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': `webuntis_device=${pair.id}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict` } })
     }
     if (request.method === 'GET' && (url.pathname === '/api/timetable' || url.pathname === '/api/glasses/timetable')) {
       const profile = await loadProfile(env)

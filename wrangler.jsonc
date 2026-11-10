@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "webuntis-glasses",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-10",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "webuntis-glasses",
+      "database_id": "8c0824a6-5f6a-4aca-8e9b-f81b32b4a3a8",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

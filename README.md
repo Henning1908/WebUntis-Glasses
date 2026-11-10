@@ -1,114 +1,96 @@
-# WebUntis Glasses
+<div align="center">
+  <img src="public/favicon.svg" alt="Meta Display Apps" width="76">
+  <h1>WebUntis Glasses</h1>
+  <p><strong>Dein Stundenplan auf Meta Display Glasses.</strong></p>
+  <p>Einmal verbinden. Angemeldet bleiben. Mit Sorgfalt gebaut von Meta Display Apps.</p>
+  <p><a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/">Web-App öffnen</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/glasses.html">Brillenansicht</a> · <a href="https://github.com/Henning1908/orbit-calendar-glasses">Orbit Calendar</a></p>
+</div>
 
-> Ein glanceable Stundenplan für Meta Display Glasses – gekoppelt über einen
-> einmaligen 6-stelligen Code.
+---
 
-[![Node.js](https://img.shields.io/badge/Node.js-20%2B-5fa04e)](https://nodejs.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+## Was die App macht
 
-## Was ist das?
+WebUntis Glasses zeigt den nächsten Unterricht und den Tagesplan auf Meta Display Glasses. Richte die Verbindung einmal im Browser ein. Die verschlüsselt gespeicherte WebUntis-Sitzung bleibt über Neustarts hinweg erhalten und wird automatisch erneuert, wenn WebUntis sie beendet.
 
-WebUntis Glasses verbindet eine Web-App auf der Brille mit einer PC- oder Handy-Ansicht.
-Die Brille zeigt beim Öffnen einen 6-stelligen Code. Auf dem PC wird dieser Code
-zusammen mit den WebUntis-Zugangsdaten bestätigt. Danach zeigt die Brillenansicht
-die nächsten Stunden mit Fach, Uhrzeit und Raum.
+### In drei Schritten starten
 
-Der Prototyp ist auf die WebUntis-Schule `ggb` voreingestellt, kann aber über die
-Login-Anfrage auch mit einer anderen WebUntis-Instanz verwendet werden.
+1. Öffne die [Brillenansicht](https://webuntis-glasses.henning-orbit-calendar.workers.dev/glasses.html). Sie zeigt einen Verbindungscode.
+2. Öffne die [Web-App](https://webuntis-glasses.henning-orbit-calendar.workers.dev/) auf einem Handy oder Computer. Gib den Code und deine WebUntis-Anmeldung ein.
+3. Der Stundenplan erscheint auf der Brille und aktualisiert sich automatisch.
 
-> **Hinweis:** Die manuelle Anmeldung benötigt vier Angaben: WebUntis-Server/URL,
-> Schulkennung, Benutzername und Passwort. Für die Schule GGB sind die
-> Voreinstellungen `https://ggb.webuntis.com` und `ggb`. Der WebUntis-Mobile-QR-
-> Schlüssel ist kein Passwort und wird von dieser Version noch nicht als Login verwendet.
+Standardmäßig ist die Schule `ggb` mit `https://ggb.webuntis.com` eingetragen. Server und Schulkennung lassen sich vor dem Verbinden ändern. Verwende dein normales WebUntis-Passwort. Der WebUntis-Mobile-QR-Schlüssel ist kein Passwort.
+
+## Datenschutz und Speicherung
+
+- Zugangsdaten und die wiederverwendbare WebUntis-Sitzung liegen gemeinsam AES-GCM-verschlüsselt in Cloudflare D1.
+- Der Einrichtungsbrowser erhält ein zufälliges, dauerhaftes `HttpOnly`-Cookie. Die WebUntis-Sitzung wird bei jedem Abruf wiederverwendet und erst nach Ablauf automatisch erneuert.
+- Der Verschlüsselungsschlüssel wird als Cloudflare Worker Secret verwaltet und nicht in Git gespeichert.
+- Die Brille speichert nur eine zufällige Gerätekennung. Dein Passwort wird nicht an die Brille übertragen.
+- Beim Trennen der Verbindung werden das verschlüsselte Profil und offene Kopplungscodes aus D1 gelöscht.
+- WebUntis-Anfragen werden vom Worker gesendet. Die App zeigt nur den eigenen Stundenplan an.
+
+Für einen öffentlichen Betrieb braucht das Projekt eine passende Datenschutzerklärung mit Verantwortlichkeit, Kontakt, Speicherfristen und den beteiligten Dienstleistern. Die aktuelle Version ist für persönliche Nutzung gedacht.
+
+## Lokale Entwicklung
+
+Voraussetzung: Node.js 20 oder neuer.
+
+```sh
+npm install
+npx wrangler login
+npm run dev
+```
+
+Wrangler nutzt standardmäßig eine lokale D1-Datenbank. Wende das Schema lokal mit `npx wrangler d1 migrations apply webuntis-glasses --local` an. Kopiere `.dev.vars.example` nach `.dev.vars` und ersetze dort den Beispielwert:
+
+```text
+WEBUNTIS_ENCRYPTION_KEY=ein-langer-zufälliger-geheimer-wert
+```
+
+`.dev.vars` wird nicht versioniert.
+
+## Cloudflare bereitstellen
+
+1. Erstelle in Cloudflare eine D1-Datenbank namens `webuntis-glasses`.
+2. Trage ihre ID in `wrangler.jsonc` ein.
+3. Installiere Abhängigkeiten und richte Wrangler ein:
+
+   ```sh
+   npm install
+   npx wrangler login
+   ```
+
+4. Wende die Migration an und setze den Verschlüsselungsschlüssel:
+
+   ```sh
+   npx wrangler d1 migrations apply webuntis-glasses --remote
+   npx wrangler secret put WEBUNTIS_ENCRYPTION_KEY
+   ```
+
+5. Stelle die App bereit:
+
+   ```sh
+   npm run deploy
+   ```
+
+Cloudflare zeigt danach die `workers.dev`-Adresse an. Aktualisiere bei einer neuen eigenen Adresse die kanonischen URLs in `public/index.html` und `public/glasses.html` sowie die Links in dieser README.
 
 ## Architektur
 
 ```text
-PC oder Handy (nur Einrichtung) ── HTTPS ── Node.js server ── WebUntis
-                                      │
-Meta Display Glasses ── eigene Gerätekennung ─┘
+Meta Display Glasses ── Gerätekennung ─┐
+                                      ├── Cloudflare Worker ── WebUntis
+Handy / Computer ── Einmal-Code ──────┘          │
+                                         verschlüsseltes Profil
+                                            in Cloudflare D1
 ```
 
-- `public/glasses.html`: reduzierte Brillenansicht und Code-Erzeugung
-- `public/index.html`: PC-/Handy-Einrichtung, Profilübertragung und Stundenplan
-- `server.js`: Pairing, verschlüsselte Speicherung und WebUntis-API
-- `render.yaml`: Ein-Klick-Konfiguration für Render
+`src/worker.js` verarbeitet Kopplung, WebUntis JSON-RPC und D1-Speicherung. Die Webseiten liegen in `public/` und werden über Cloudflare Workers Static Assets ausgeliefert. Die Sitzungs-ID wird beim Stundenplanabruf wiederverwendet; schlägt sie fehl, meldet der Worker das gespeicherte Profil erneut an und legt die neue Sitzungs-ID sicher ab.
 
-Die zentrale Server-Sitzung ist die dauerhafte Steuerzentrale. PC und Handy
-werden nur für die Einrichtung benötigt. Danach fragt die Brille den Server
-direkt über ihre eigene Gerätekennung ab und benötigt keine aktive Verbindung
-zu PC oder Handy. Die Brille speichert keine WebUntis-Zugangsdaten; eine
-Web-App auf der Brille hat keinen verlässlichen eigenen Dateispeicher. Auf
-Render wird dafür ein persistenter Datenträger verwendet.
+## Projekte aus einer Werkstatt
 
-Wenn der Browser der Brille seine lokale Gerätekennung beim Schließen verliert,
-ordnet der Server eine neue Brilleninstanz automatisch wieder dem bereits
-gespeicherten Profil zu. Eine neue Kopplung ist nur nach dem ausdrücklichen
-Trennen der Verbindung erforderlich.
-
-## Schnellstart lokal
-
-Voraussetzung: Node.js 20 oder neuer.
-
-```powershell
-Set-Location 'D:\Programmieren\WebUntis'
-Copy-Item .env.example .env
-$env:WEBUNTIS_ENCRYPTION_KEY = 'ein-langer-zufälliger-geheimer-schlüssel'
-npm start
-```
-
-Ohne lokales Zertifikat läuft der Server unter `http://localhost:3000`.
-Für die Brille wird HTTPS benötigt. Erzeuge dafür einmal ein lokales Zertifikat
-(OpenSSL, Git for Windows enthält es):
-
-```powershell
-New-Item -ItemType Directory -Force data | Out-Null
-openssl req -x509 -newkey rsa:2048 -sha256 -nodes -days 365 `
-  -keyout data\localhost-key.pem -out data\localhost-cert.pem `
-  -subj "/CN=WebUntis Glasses" `
-  -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:192.168.10.17"
-```
-
-Danach startet der Server automatisch per HTTPS. Selbstsignierte Zertifikate
-werden von einigen Brillen nicht akzeptiert; für echte Nutzung ist Hosting mit
-öffentlichem HTTPS vorzuziehen.
-
-## Deployment auf Render
-
-1. Repository auf GitHub pushen.
-2. In Render **New → Web Service** auswählen und das Repository verbinden.
-3. `Build Command`: `npm install`
-4. `Start Command`: `npm start`
-5. Environment Variable setzen:
-   - `WEBUNTIS_ENCRYPTION_KEY`: langer zufälliger Wert
-6. Deploy starten. Für den persistenten Speicher ist der Render-Starter-Tarif
-   mit einem 1-GB-Datenträger vorgesehen; mit Render Free würde die Datei bei
-   einem Neustart wieder verloren gehen.
-
-Render beendet TLS vor der Node-App und stellt automatisch eine öffentliche
-`https://...onrender.com`-Adresse bereit. In diesem Fall werden keine lokalen
-Zertifikatsdateien benötigt. Öffne anschließend:
-
-```text
-https://DEINE-APP.onrender.com/glasses.html
-```
-
-## Sicherheit
-
-- Zugangsdaten werden nicht ins Frontend übertragen oder ins Repository geschrieben.
-- Die gespeicherten Zugangsdaten werden mit AES-256-GCM verschlüsselt.
-- `WEBUNTIS_ENCRYPTION_KEY` muss als geheime Umgebungsvariable gesetzt werden.
-- `data/`, `.env` und lokale Schlüssel sind absichtlich gitignored.
-- Dies ist ein persönliches Hobbyprojekt. Vor öffentlichem Betrieb sollten
-  Rate-Limiting, Benutzerkonten, Logout/Token-Widerruf und eine Datenbank ergänzt
-  werden.
-
-## Prüfen
-
-```powershell
-npm run check
-```
+Meta Display Apps ist die gemeinsame Klammer für Apps auf Meta Smart Glasses. [Orbit Calendar](https://github.com/Henning1908/orbit-calendar-glasses) und WebUntis Glasses teilen dieselbe dunkle, klare Gestaltung und denselben Fokus auf kurze, gut lesbare Informationen im Display.
 
 ## Lizenz
 
-MIT – siehe [LICENSE](LICENSE).
+MIT. Siehe [LICENSE](LICENSE).

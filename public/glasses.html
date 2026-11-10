@@ -3,13 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>WebUntis Glasses · Standalone</title>
+  <title>WebUntis Glasses · Meta Display Apps</title>
+  <meta name="description" content="Verbinde WebUntis dauerhaft mit deiner Meta Smart Glasses und sieh den nächsten Unterricht direkt im Display.">
+  <meta name="theme-color" content="#07111f">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/glasses.html">
   <link rel="stylesheet" href="/styles.css">
   <link rel="manifest" href="/.well-known/meta-wearables-manifest.json">
 </head>
 <body class="glasses-page">
   <main class="glasses-app">
-    <span class="glasses-brand">WEBUNTIS</span>
+    <div class="glasses-brandline"><img src="/favicon.svg" alt=""><span class="glasses-brand">META DISPLAY APPS · WEBUNTIS</span></div>
     <h1 id="glass-title">Mit PC verbinden</h1>
     <p id="pair-instruction">Gib diesen Code auf dem PC ein:</p>
     <div id="pair-code" class="pair-code">------</div>
@@ -65,10 +69,14 @@
       var lastTimetable = null;
       var retryTimer = null;
       var savedId = window.localStorage ? window.localStorage.getItem("webuntis-glasses-device") : null;
-      var savedProfile = window.localStorage ? window.localStorage.getItem("webuntis-glasses-profile") : null;
-      function error(message) { state.innerHTML = message; state.className = "message error"; }
+      function error(message) { state.textContent = message; state.className = "message error"; }
+      function escapeHtml(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+        });
+      }
       function showRetry(message) {
-        state.innerHTML = message;
+        state.textContent = message;
         state.className = "muted";
         if (lastTimetable) {
           showNext(lastTimetable.next);
@@ -76,7 +84,7 @@
         }
       }
       function text(items, fallback) {
-        return items && items.length ? items.map(function (item) { return item.name; }).join(", ") : fallback;
+        return escapeHtml(items && items.length ? items.map(function (item) { return item.name; }).join(", ") : fallback);
       }
       function formatDate(value) {
         var raw = String(value || "");
@@ -110,13 +118,13 @@
         var group = dayGroups[dayIndex];
         next.hidden = true;
         day.hidden = false;
-        dayTitle.innerHTML = group.key === todayKey() ? "Heute" : formatDate(group.key);
-        dayPosition.innerHTML = (dayIndex + 1) + " / " + dayGroups.length;
+        dayTitle.textContent = group.key === todayKey() ? "Heute" : formatDate(group.key);
+        dayPosition.textContent = (dayIndex + 1) + " / " + dayGroups.length;
         dayBack.disabled = dayIndex <= 0;
         dayForward.disabled = dayIndex >= dayGroups.length - 1;
         dayEntries.innerHTML = group.items.length ? group.items.map(function (item) {
           var status = item.cancelled ? " · Entfällt" : (item.substitution || item.info ? " · " + (item.substitution || item.info) : "");
-          return "<div class='day-entry'><time>" + formatTime(item.startTime) + "–" + formatTime(item.endTime) + "</time><div><strong>" + text(item.subjects, "Unterricht") + "</strong><small>Raum: " + text(item.rooms, "offen") + status + "</small></div></div>";
+          return "<div class='day-entry'><time>" + escapeHtml(formatTime(item.startTime)) + "–" + escapeHtml(formatTime(item.endTime)) + "</time><div><strong>" + text(item.subjects, "Unterricht") + "</strong><small>Raum: " + text(item.rooms, "offen") + escapeHtml(status) + "</small></div></div>";
         }).join("") : "<p class='day-empty'>Keine weiteren Stunden.</p>";
       }
       function buildDayGroups(items) {
@@ -143,10 +151,10 @@
         if (!item) {
           next.hidden = false;
           nextSubject.innerHTML = "Heute kein Unterricht";
-          nextTime.innerHTML = "";
-          nextRoom.innerHTML = "Keine weiteren Stunden im geladenen Zeitraum.";
-          nextDate.innerHTML = "";
-          nextStatus.innerHTML = "";
+          nextTime.textContent = "";
+          nextRoom.textContent = "Keine weiteren Stunden im geladenen Zeitraum.";
+          nextDate.textContent = "";
+          nextStatus.textContent = "";
           return;
         }
         var start = String(item.startTime || "0000");
@@ -154,10 +162,10 @@
         while (start.length < 4) start = "0" + start;
         while (end.length < 4) end = "0" + end;
         nextSubject.innerHTML = text(item.subjects, "Unterricht");
-        nextTime.innerHTML = start.substr(0, 2) + ":" + start.substr(2) + "–" + end.substr(0, 2) + ":" + end.substr(2);
+        nextTime.textContent = start.substr(0, 2) + ":" + start.substr(2) + "–" + end.substr(0, 2) + ":" + end.substr(2);
         nextRoom.innerHTML = "Raum: " + text(item.rooms, "Noch nicht festgelegt");
-        nextDate.innerHTML = formatDate(item.date);
-        nextStatus.innerHTML = item.cancelled ? "Entfällt" : (item.substitution || item.info || "");
+        nextDate.textContent = formatDate(item.date);
+        nextStatus.textContent = item.cancelled ? "Entfällt" : (item.substitution || item.info || "");
         next.hidden = false;
       }
       function showConnected() {
@@ -166,27 +174,15 @@
         code.hidden = true;
         state.innerHTML = "Verbunden";
       }
-      function saveProfile(profile) {
-        if (profile && window.localStorage) {
-          window.localStorage.setItem("webuntis-glasses-profile", JSON.stringify(profile));
-        }
-      }
-      function restoreSavedProfile() {
-        if (!savedProfile) return Promise.resolve();
-        return fetch("/api/glasses/restore", {
+      disconnectButton.onclick = function () {
+        fetch("/api/disconnect", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: savedProfile
-        }).then(function (response) {
-          if (!response.ok) throw new Error("Gespeichertes Profil konnte nicht wiederhergestellt werden.");
-        }).catch(function () {});
-      }
-      disconnectButton.onclick = function () {
-        fetch("/api/disconnect", { method: "POST" })
+          body: JSON.stringify({ deviceId: savedId })
+        })
           .then(function () {
             if (window.localStorage) {
               window.localStorage.removeItem("webuntis-glasses-device");
-              window.localStorage.removeItem("webuntis-glasses-profile");
             }
             pair = null;
             code.innerHTML = "------";
@@ -210,7 +206,6 @@
                 : "Gerät wartet auf den Server …");
               return null;
             }
-            saveProfile(current.profile);
             showConnected();
             return Promise.all([
               fetch("/api/glasses/timetable?deviceId=" + encodeURIComponent(pair.id)).then(function (response) {
@@ -279,8 +274,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          deviceId: savedId,
-          profile: savedProfile ? JSON.parse(savedProfile) : null
+          deviceId: savedId
         })
       })
         .then(function (response) { return response.json(); })
@@ -288,20 +282,10 @@
           if (!result.id) throw new Error("Keine Geräteverbindung erhalten.");
           if (result.connected) {
             pair = result;
-            saveProfile(result.profile);
             if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);
             showConnected();
             checkPair();
           } else {
-            if (savedProfile) {
-              restoreSavedProfile().then(function () {
-                pair = { id: JSON.parse(savedProfile).deviceId, connected: true };
-                if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", pair.id);
-                showConnected();
-                checkPair();
-              });
-              return;
-            }
             pair = result;
             if (window.localStorage) {
               window.localStorage.removeItem("webuntis-glasses-device");
@@ -313,13 +297,11 @@
           setInterval(checkPair, 30000);
         })
         .catch(function (reason) { error(reason.message); });
-      restoreSavedProfile().then(function () {
-        if (savedId) {
-          pair = { id: savedId, connected: true };
-          showConnected();
-          checkPair();
-        }
-      });
+      if (savedId) {
+        pair = { id: savedId, connected: true };
+        showConnected();
+        checkPair();
+      }
     }());
   </script>
 </body>

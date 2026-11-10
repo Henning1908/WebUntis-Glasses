@@ -5,6 +5,10 @@ const glassStatus = document.querySelector("#glass-status");
 const nextSubject = document.querySelector("#next-subject");
 const nextDetails = document.querySelector("#next-details");
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+}
+
 async function api(url, options) {
   const response = await fetch(url, options);
   const body = await response.json();
@@ -24,7 +28,7 @@ async function loadTimetable() {
   try {
     const data = await api("/api/timetable");
     const formatted = (data.entries || []).map(formatEntry).slice(0, 30);
-    entries.innerHTML = formatted.length ? formatted.map((item) => `<div class="entry"><time>${item.time}</time><div><strong>${item.subject}</strong><small>${item.date || ""}</small></div><small>${item.room}</small></div>`).join("") : '<p class="muted">Keine Stunden gefunden.</p>';
+    entries.innerHTML = formatted.length ? formatted.map((item) => `<div class="entry"><time>${escapeHtml(item.time)}</time><div><strong>${escapeHtml(item.subject)}</strong><small>${escapeHtml(item.date || "")}</small></div><small>${escapeHtml(item.room)}</small></div>`).join("") : '<p class="muted">Keine Stunden gefunden.</p>';
     const next = formatted[0];
     if (next) { nextSubject.textContent = next.subject; nextDetails.textContent = `${next.time} · ${next.room}`; glassStatus.textContent = "Verbunden · nächster Unterricht"; }
   } catch (error) {
@@ -49,6 +53,7 @@ pairForm.addEventListener("submit", async (event) => {
   const form = new FormData(pairForm);
   try {
     await api("/api/pair/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
+    document.querySelector("#password").value = "";
     pairMessage.className = "message ok";
     pairMessage.textContent = "Profil übertragen. Die Brille kann jetzt selbstständig auf den Stundenplan zugreifen.";
     await loadTimetable();

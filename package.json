@@ -1,17 +1,16 @@
 {
-  "name": "webuntis-glasses",
+  "name": "meta-display-webuntis",
   "version": "0.1.0",
   "private": true,
-  "description": "WebUntis timetable bridge for Meta Display glasses",
+  "description": "WebUntis timetable for Meta Display Glasses by Meta Display Apps",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "check": "node --check server.js"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "node --check src/worker.js"
   },
   "engines": {
     "node": ">=20"
   },
-  "dependencies": {
-    "webuntis": "^2.2.1"
-  }
+  "devDependencies": { "wrangler": "^4.160.0" }
 }

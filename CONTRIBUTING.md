@@ -2,21 +2,23 @@
 
 Danke für dein Interesse an WebUntis Glasses.
 
-## Lokal starten
+## Lokal entwickeln
 
-```powershell
-Copy-Item .env.example .env
-npm start
+```sh
+npm install
+Copy-Item .dev.vars.example .dev.vars
+npx wrangler d1 migrations apply webuntis-glasses --local
+npm run dev
 ```
 
-Für lokale HTTPS-Entwicklung siehe den Zertifikatsabschnitt in der README.
+Setze einen eigenen zufälligen Wert für `WEBUNTIS_ENCRYPTION_KEY` in `.dev.vars`.
 
 ## Änderungen prüfen
 
-```powershell
+```sh
 npm run check
 ```
 
-Bitte keine Zugangsdaten, Token, Zertifikatsschlüssel oder Dateien aus `data/`
-committen. Pull Requests sollten die Motivation, die Änderung und den Testschritt
-kurz beschreiben.
+Keine Zugangsdaten, Sitzungskennungen, Secrets oder Dateien aus `.wrangler/`
+committen. Beschreibe bei Beiträgen kurz die Motivation und die geänderten
+Bereiche.

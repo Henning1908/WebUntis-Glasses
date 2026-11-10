@@ -6,7 +6,7 @@
 
 [Open WebUntis Glasses](https://webuntis-glasses.henning-orbit-calendar.workers.dev/) · [English guide](https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.html) · [Deutsche Anleitung](https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.de.html)
 
-Part of **Meta Display Apps** · [Orbit Calendar](https://github.com/Henning1908/orbit-calendar-glasses) · [☕ Buy me a coffee](https://gofund.me/89190630b)
+Part of **Meta Display Apps** · [Orbit Calendar](https://orbit-calendar.henning-orbit-calendar.workers.dev/) · [☕ Buy me a coffee](https://gofund.me/89190630b)
 
 <img src="docs/assets/webuntis-hero.svg" alt="WebUntis school timetable displayed on Meta smart glasses" width="100%">
 
@@ -35,9 +35,11 @@ The hosted version is intended for personal use. Please review the [privacy info
 
 ## Part of Meta Display Apps
 
-Meta Display Apps builds small, glanceable tools for supported Meta display glasses. Visit the [Orbit Calendar project](https://github.com/Henning1908/orbit-calendar-glasses), another app in the same family.
+Meta Display Apps builds small, glanceable tools for supported Meta display glasses. Visit [Orbit Calendar](https://orbit-calendar.henning-orbit-calendar.workers.dev/), another app in the same family.
 
-Questions or ideas? Open a [GitHub issue](https://github.com/Henning1908/WebUntis-Glasses/issues) or [support the project](https://gofund.me/89190630b).
+Questions or ideas? Read the [WebUntis Glasses guide](https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.html) or [support the project](https://gofund.me/89190630b).
+
+For source code and developer discussions, visit [GitHub](https://github.com/Henning1908/WebUntis-Glasses).
 
 ## License
 

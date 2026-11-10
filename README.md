@@ -18,8 +18,8 @@ WebUntis Glasses brings your next lesson and daily timetable to supported Meta s
 
 ### Get started
 
-1. Open the [glasses view](https://webuntis-glasses.henning-orbit-calendar.workers.dev/glasses.html) on your glasses and keep the pairing code visible.
-2. Open the [WebUntis web app](https://webuntis-glasses.henning-orbit-calendar.workers.dev/) on your phone or computer. Enter the code and your school’s WebUntis sign-in details.
+1. Open the [online guide](https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.html) on your phone or computer and use its QR install button to add WebUntis Glasses to your Meta display glasses.
+2. Open WebUntis Glasses from the glasses app grid. Then open the [WebUntis web app](https://webuntis-glasses.henning-orbit-calendar.workers.dev/) on your phone or computer and enter the pairing code and your school’s sign-in details.
 3. See your next class and daily schedule at a glance. The display refreshes automatically.
 
 Use your regular WebUntis password. The WebUntis Mobile QR key is not a password and is not supported as a sign-in method in this version. The school identifier and server can be changed before pairing.

@@ -1,11 +1,12 @@
-<div align="center">
-  <img src="public/images/webuntis-app-icon.svg" alt="WebUntis Glasses app icon" width="76">
-  <h1>WebUntis Glasses</h1>
-  <p><strong>Your school timetable at a glance on Meta display glasses.</strong></p>
-  <p>Connect once, stay signed in, and keep your next lesson close.</p>
-  <p><a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/">Open WebUntis Glasses</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.html">English guide</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.de.html">Deutsche Anleitung</a></p>
-  <p>Part of <strong>Meta Display Apps</strong> · <a href="https://github.com/Henning1908/orbit-calendar-glasses">Orbit Calendar</a> · <a href="https://gofund.me/89190630b">☕ Buy me a coffee</a></p>
-</div>
+# WebUntis Glasses
+
+<p align="center"><img src="public/images/webuntis-app-icon.svg" alt="WebUntis Glasses app icon" width="76"></p>
+
+**Your school timetable at a glance on Meta display glasses.** Connect once, stay signed in, and keep your next lesson close.
+
+[Open WebUntis Glasses](https://webuntis-glasses.henning-orbit-calendar.workers.dev/) · [English guide](https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.html) · [Deutsche Anleitung](https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.de.html)
+
+Part of **Meta Display Apps** · [Orbit Calendar](https://github.com/Henning1908/orbit-calendar-glasses) · [☕ Buy me a coffee](https://gofund.me/89190630b)
 
 <img src="docs/assets/webuntis-hero.svg" alt="WebUntis school timetable displayed on Meta smart glasses" width="100%">
 
@@ -34,7 +35,7 @@ The hosted version is intended for personal use. Please review the [privacy info
 
 ## Part of Meta Display Apps
 
-Meta Display Apps builds small, glanceable tools for supported Meta display glasses. Explore [Orbit Calendar](https://orbit-calendar.henning-orbit-calendar.workers.dev/) to see upcoming calendar events in the same family of apps.
+Meta Display Apps builds small, glanceable tools for supported Meta display glasses. Visit the [Orbit Calendar project](https://github.com/Henning1908/orbit-calendar-glasses), another app in the same family.
 
 Questions or ideas? Open a [GitHub issue](https://github.com/Henning1908/WebUntis-Glasses/issues) or [support the project](https://gofund.me/89190630b).
 

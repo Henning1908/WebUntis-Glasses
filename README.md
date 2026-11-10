@@ -1,101 +1,43 @@
 <div align="center">
   <img src="public/images/webuntis-app-icon.svg" alt="WebUntis Glasses app icon" width="76">
   <h1>WebUntis Glasses</h1>
-  <p><strong>Dein Stundenplan auf Meta Display Glasses.</strong></p>
-  <p>Einmal verbinden. Angemeldet bleiben. Mit Sorgfalt gebaut von Meta Display Apps.</p>
-  <p><a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/">Web-App öffnen</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.de.html">Anleitung</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/glasses.html">Brillenansicht</a> · <a href="https://orbit-calendar.henning-orbit-calendar.workers.dev/">Orbit Calendar</a></p>
-  <p><a href="https://gofund.me/89190630b">☕ Spendier mir einen Kaffee</a></p>
+  <p><strong>Your school timetable at a glance on Meta display glasses.</strong></p>
+  <p>Connect once, stay signed in, and keep your next lesson close.</p>
+  <p><a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/">Open WebUntis Glasses</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.html">English guide</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.de.html">Deutsche Anleitung</a></p>
+  <p>Part of <strong>Meta Display Apps</strong> · <a href="https://github.com/Henning1908/orbit-calendar-glasses">Orbit Calendar</a> · <a href="https://gofund.me/89190630b">☕ Buy me a coffee</a></p>
 </div>
 
-<img src="docs/assets/webuntis-hero.svg" alt="WebUntis timetable connected to Meta display glasses" width="100%">
+<img src="docs/assets/webuntis-hero.svg" alt="WebUntis school timetable displayed on Meta smart glasses" width="100%">
 
 ---
 
-## Was die App macht
+## Your school day, ready at a glance
 
-WebUntis Glasses zeigt den nächsten Unterricht und den Tagesplan auf Meta Display Glasses. Richte die Verbindung einmal im Browser ein. Die verschlüsselt gespeicherte WebUntis-Sitzung bleibt über Neustarts hinweg erhalten und wird automatisch erneuert, wenn WebUntis sie beendet.
+WebUntis Glasses brings your next lesson and daily timetable to supported Meta smart glasses with a display. Pair your glasses once using a short code; your WebUntis session is stored securely and renewed automatically when needed.
 
-### In drei Schritten starten
+### Get started
 
-1. Öffne die [Brillenansicht](https://webuntis-glasses.henning-orbit-calendar.workers.dev/glasses.html). Sie zeigt einen Verbindungscode.
-2. Öffne die [Web-App](https://webuntis-glasses.henning-orbit-calendar.workers.dev/) auf einem Handy oder Computer. Gib den Code und deine WebUntis-Anmeldung ein.
-3. Der Stundenplan erscheint auf der Brille und aktualisiert sich automatisch.
+1. Open the [glasses view](https://webuntis-glasses.henning-orbit-calendar.workers.dev/glasses.html) on your glasses and keep the pairing code visible.
+2. Open the [WebUntis web app](https://webuntis-glasses.henning-orbit-calendar.workers.dev/) on your phone or computer. Enter the code and your school’s WebUntis sign-in details.
+3. See your next class and daily schedule at a glance. The display refreshes automatically.
 
-Standardmäßig ist die Schule `ggb` mit `https://ggb.webuntis.com` eingetragen. Server und Schulkennung lassen sich vor dem Verbinden ändern. Verwende dein normales WebUntis-Passwort. Der WebUntis-Mobile-QR-Schlüssel ist kein Passwort.
+Use your regular WebUntis password. The WebUntis Mobile QR key is not a password and is not supported as a sign-in method in this version. The school identifier and server can be changed before pairing.
 
-## Datenschutz und Speicherung
+## Privacy at a glance
 
-- Zugangsdaten und die wiederverwendbare WebUntis-Sitzung liegen gemeinsam AES-GCM-verschlüsselt in Cloudflare D1.
-- Der Einrichtungsbrowser erhält ein zufälliges, dauerhaftes `HttpOnly`-Cookie. Die WebUntis-Sitzung wird bei jedem Abruf wiederverwendet und erst nach Ablauf automatisch erneuert.
-- Der Verschlüsselungsschlüssel wird als Cloudflare Worker Secret verwaltet und nicht in Git gespeichert.
-- Die Brille speichert nur eine zufällige Gerätekennung. Dein Passwort wird nicht an die Brille übertragen.
-- Beim Trennen der Verbindung werden das verschlüsselte Profil und offene Kopplungscodes aus D1 gelöscht.
-- WebUntis-Anfragen werden vom Worker gesendet. Die App zeigt nur den eigenen Stundenplan an.
+- Your WebUntis credentials and session are encrypted before secure storage. The service is hosted on Cloudflare.
+- The glasses receive a random device identifier; your password is never sent to them.
+- Disconnecting removes your saved profile and pairing.
+- WebUntis Glasses only reads your timetable and displays it for you.
 
-Für einen öffentlichen Betrieb braucht das Projekt eine passende Datenschutzerklärung mit Verantwortlichkeit, Kontakt, Speicherfristen und den beteiligten Dienstleistern. Die aktuelle Version ist für persönliche Nutzung gedacht.
+The hosted version is intended for personal use. Please review the [privacy information](https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.html#privacy) before connecting an account.
 
-## Lokale Entwicklung
+## Part of Meta Display Apps
 
-Voraussetzung: Node.js 20 oder neuer.
+Meta Display Apps builds small, glanceable tools for supported Meta display glasses. Explore [Orbit Calendar](https://orbit-calendar.henning-orbit-calendar.workers.dev/) to see upcoming calendar events in the same family of apps.
 
-```sh
-npm install
-npx wrangler login
-npm run dev
-```
+Questions or ideas? Open a [GitHub issue](https://github.com/Henning1908/WebUntis-Glasses/issues) or [support the project](https://gofund.me/89190630b).
 
-Wrangler nutzt standardmäßig eine lokale D1-Datenbank. Wende das Schema lokal mit `npx wrangler d1 migrations apply webuntis-glasses --local` an. Kopiere `.dev.vars.example` nach `.dev.vars` und ersetze dort den Beispielwert:
+## License
 
-```text
-WEBUNTIS_ENCRYPTION_KEY=ein-langer-zufälliger-geheimer-wert
-```
-
-`.dev.vars` wird nicht versioniert.
-
-## Cloudflare bereitstellen
-
-1. Erstelle in Cloudflare eine D1-Datenbank namens `webuntis-glasses`.
-2. Trage ihre ID in `wrangler.jsonc` ein.
-3. Installiere Abhängigkeiten und richte Wrangler ein:
-
-   ```sh
-   npm install
-   npx wrangler login
-   ```
-
-4. Wende die Migration an und setze den Verschlüsselungsschlüssel:
-
-   ```sh
-   npx wrangler d1 migrations apply webuntis-glasses --remote
-   npx wrangler secret put WEBUNTIS_ENCRYPTION_KEY
-   ```
-
-5. Stelle die App bereit:
-
-   ```sh
-   npm run deploy
-   ```
-
-Cloudflare zeigt danach die `workers.dev`-Adresse an. Aktualisiere bei einer neuen eigenen Adresse die kanonischen URLs in `public/index.html` und `public/glasses.html` sowie die Links in dieser README.
-
-## Architektur
-
-```text
-Meta Display Glasses ── Gerätekennung ─┐
-                                      ├── Cloudflare Worker ── WebUntis
-Handy / Computer ── Einmal-Code ──────┘          │
-                                         verschlüsseltes Profil
-                                            in Cloudflare D1
-```
-
-`src/worker.js` verarbeitet Kopplung, WebUntis JSON-RPC und D1-Speicherung. Die Webseiten liegen in `public/` und werden über Cloudflare Workers Static Assets ausgeliefert. Die Sitzungs-ID wird beim Stundenplanabruf wiederverwendet; schlägt sie fehl, meldet der Worker das gespeicherte Profil erneut an und legt die neue Sitzungs-ID sicher ab.
-
-## Projekte aus einer Werkstatt
-
-Meta Display Apps ist die gemeinsame Klammer für Apps auf Meta Smart Glasses. [Orbit Calendar](https://github.com/Henning1908/orbit-calendar-glasses) und WebUntis Glasses teilen dieselbe dunkle, klare Gestaltung und denselben Fokus auf kurze, gut lesbare Informationen im Display. [Orbit Calendar öffnen](https://orbit-calendar.henning-orbit-calendar.workers.dev/) · [WebUntis Glasses öffnen](https://webuntis-glasses.henning-orbit-calendar.workers.dev/).
-
-![WebUntis Glasses system architecture](docs/assets/architecture.svg)
-
-## Lizenz
-
-MIT. Siehe [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

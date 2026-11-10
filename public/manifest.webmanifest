@@ -1,0 +1,17 @@
+{
+  "name": "WebUntis Glasses",
+  "short_name": "WebUntis",
+  "description": "Your school timetable at a glance on supported Meta display glasses.",
+  "start_url": "/glasses.html",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "icons": [
+    {
+      "src": "/images/webuntis-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

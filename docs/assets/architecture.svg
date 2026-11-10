@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">WebUntis Glasses system architecture</title>
+  <desc id="desc">The setup browser and Meta display glasses connect securely through a Cloudflare Worker to WebUntis, with an encrypted profile in Cloudflare D1.</desc>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071426"/><stop offset="1" stop-color="#101d32"/></linearGradient><linearGradient id="edge" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#66d8ff"/><stop offset="1" stop-color="#28d6a0"/></linearGradient></defs>
+  <rect width="1200" height="520" rx="32" fill="url(#bg)"/>
+  <g font-family="Inter,Segoe UI,Arial,sans-serif" fill="#f4f8ff">
+    <text x="60" y="68" fill="#66d8ff" font-size="14" font-weight="700" letter-spacing="3">META DISPLAY APPS / WEBUNTIS</text>
+    <text x="60" y="116" font-size="30" font-weight="700">One secure connection, ready when you are.</text>
+    <g transform="translate(60 185)">
+      <rect width="230" height="170" rx="22" fill="#10273a" stroke="#47637e"/><rect x="77" y="26" width="76" height="60" rx="10" fill="#0a192a" stroke="#66d8ff" stroke-width="2"/><path d="M64 99h102l-10 12H74z" fill="#66d8ff"/>
+      <text x="24" y="140" font-size="17" font-weight="700">Phone or computer</text><text x="24" y="160" fill="#a9bed3" font-size="12">One-time setup · pairing code</text>
+    </g>
+    <g transform="translate(400 185)">
+      <rect width="230" height="170" rx="22" fill="#10273a" stroke="#47637e"/><path d="M43 45c10-15 23-19 43-17l29 5 29-5c20-2 33 2 43 17l-5 34c-1 10-10 17-21 16l-19-1c-15-1-25-10-29-23l-3-9-3 9c-4 13-14 22-29 23l-19 1c-11 1-20-6-21-16z" fill="#153c53" stroke="#66d8ff" stroke-width="2"/><text x="28" y="140" font-size="17" font-weight="700">Meta Display Glasses</text><text x="28" y="160" fill="#a9bed3" font-size="12">Random device ID · timetable view</text>
+    </g>
+    <g transform="translate(740 185)">
+      <rect width="190" height="170" rx="22" fill="#10273a" stroke="#47637e"/><path d="M95 27l38 18v29c0 26-17 43-38 53-21-10-38-27-38-53V45z" fill="#123b4c" stroke="#28d6a0" stroke-width="3"/><path d="m77 74 13 13 25-27" fill="none" stroke="#28d6a0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><text x="42" y="140" font-size="17" font-weight="700">Cloudflare Worker</text><text x="49" y="160" fill="#a9bed3" font-size="12">API · session renewal</text>
+    </g>
+    <g transform="translate(1000 185)">
+      <rect width="145" height="170" rx="22" fill="#10273a" stroke="#47637e"/><path d="M39 54h67v54H39z" fill="#0a192a" stroke="#66d8ff" stroke-width="2"/><path d="M49 68h47M49 81h47M49 94h31" stroke="#28d6a0" stroke-width="4" stroke-linecap="round"/><text x="32" y="140" font-size="17" font-weight="700">WebUntis</text><text x="22" y="160" fill="#a9bed3" font-size="12">School timetable</text>
+    </g>
+    <g fill="none" stroke="url(#edge)" stroke-width="4" stroke-linecap="round"><path d="M306 270h72"/><path d="M646 270h72"/><path d="M946 270h40"/></g>
+    <g fill="#28d6a0"><path d="m375 262 12 8-12 8z"/><path d="m715 262 12 8-12 8z"/><path d="m983 262 12 8-12 8z"/></g>
+    <path d="M835 373v48H835" stroke="#28d6a0" stroke-width="3" fill="none"/>
+    <rect x="707" y="421" width="255" height="58" rx="15" fill="#0c2631" stroke="#3c786f"/>
+    <text x="727" y="446" fill="#28d6a0" font-size="13" font-weight="700">CLOUDFLARE D1 · EU</text><text x="727" y="466" fill="#bed2df" font-size="12">Encrypted WebUntis profile + session</text>
+  </g>
+</svg>

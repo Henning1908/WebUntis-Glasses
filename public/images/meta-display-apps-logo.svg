@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Meta Display Apps Logo</title>
+  <desc id="desc">A minimal calendar tile framed by an orbital loop, in midnight navy, cyan, mint, and warm orange.</desc>
+  <defs>
+    <linearGradient id="tile" x1="100" y1="92" x2="396" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#142A43"/><stop offset="1" stop-color="#06101F"/>
+    </linearGradient>
+    <linearGradient id="orbit" x1="78" y1="128" x2="434" y2="382" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#66D8FF"/><stop offset=".56" stop-color="#28D6A0"/><stop offset="1" stop-color="#FF6A35"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="256" cy="256" rx="201" ry="116" transform="rotate(-34 256 256)" stroke="url(#orbit)" stroke-width="15"/>
+    <path d="M112 362c36 39 87 63 144 63 24 0 47-4 68-12" stroke="#66D8FF" stroke-width="8" opacity=".42"/>
+  </g>
+  <circle cx="420" cy="131" r="13" fill="#FF6A35"/>
+  <circle cx="89" cy="337" r="9" fill="#28D6A0"/>
+  <rect x="151" y="132" width="210" height="248" rx="37" fill="url(#tile)" stroke="#DCEBFA" stroke-opacity=".9" stroke-width="8"/>
+  <path d="M151 194c0-20.4 16.6-37 37-37h136c20.4 0 37 16.6 37 37v16H151v-16Z" fill="#66D8FF"/>
+  <path d="M205 121v37M307 121v37" stroke="#DCEBFA" stroke-width="13"/>
+  <path d="M199 253h34M279 253h34M199 303h34M279 303h34" stroke="#DCEBFA" stroke-width="15"/>
+  <circle cx="256" cy="278" r="12" fill="#28D6A0"/>
+  <path d="m318 315 12 12 23-27" stroke="#FF6A35" stroke-width="11"/>
+</svg>
+

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 760" role="img" aria-labelledby="title desc">
+  <title id="title">WebUntis Glasses · Meta Display Apps</title>
+  <desc id="desc">A WebUntis timetable paired with Meta display glasses, with a secure Cloudflare connection.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071426"/><stop offset=".55" stop-color="#0a2137"/><stop offset="1" stop-color="#111b34"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#5be0ff" stop-opacity=".32"/><stop offset="1" stop-color="#5be0ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#99efff"/><stop offset="1" stop-color="#37b4e6"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1b3653"/><stop offset="1" stop-color="#101c30"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#000" flood-opacity=".38"/></filter>
+  </defs>
+  <rect width="1440" height="760" rx="38" fill="url(#bg)"/>
+  <circle cx="1180" cy="150" r="410" fill="url(#glow)"/>
+  <circle cx="120" cy="690" r="300" fill="url(#glow)" opacity=".5"/>
+  <path d="M0 585C275 485 438 708 718 626s442-204 722-101v235H0z" fill="#091a2a" opacity=".5"/>
+  <g font-family="Inter,Segoe UI,Arial,sans-serif">
+    <g transform="translate(102 112)">
+      <rect width="52" height="52" rx="17" fill="url(#blue)"/>
+      <path d="M14 16h24v20H14zM19 40h14M20 22h12M20 28h8" fill="none" stroke="#061321" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="70" y="22" fill="#a6eaff" font-size="16" font-weight="700" letter-spacing="4">META DISPLAY APPS / WEBUNTIS</text>
+      <text x="0" y="139" fill="#f7fbff" font-size="67" font-weight="700" letter-spacing="-3">Your timetable,</text>
+      <text x="0" y="216" fill="#f7fbff" font-size="67" font-weight="700" letter-spacing="-3">in one clear glance.</text>
+      <text x="4" y="267" fill="#b4c7dc" font-size="22">WebUntis for Meta display glasses.</text>
+      <g transform="translate(0 322)">
+        <rect width="185" height="52" rx="16" fill="#8cecff"/>
+        <text x="25" y="33" fill="#061321" font-size="16" font-weight="700">CONNECT ONCE</text>
+        <rect x="202" width="190" height="52" rx="16" fill="#12283d" stroke="#42617c"/>
+        <text x="225" y="33" fill="#e5f2ff" font-size="16" font-weight="700">STAY SIGNED IN</text>
+      </g>
+      <g transform="translate(0 425)" fill="#d6e4f2" font-size="15">
+        <circle cx="6" cy="7" r="5" fill="#35d5a2"/><text x="21" y="12">Encrypted session storage</text>
+        <circle cx="250" cy="7" r="5" fill="#35d5a2"/><text x="265" y="12">Auto-renewed login</text>
+      </g>
+    </g>
+    <g transform="translate(740 75) rotate(2 280 295)" filter="url(#shadow)">
+      <rect width="488" height="558" rx="30" fill="url(#glass)" stroke="#64819a" stroke-opacity=".6"/>
+      <rect x="18" y="18" width="452" height="522" rx="22" fill="#081629" stroke="#90a8bd" stroke-opacity=".18"/>
+      <text x="48" y="68" fill="#6ddfff" font-size="11" font-weight="700" letter-spacing="3">WEBUNTIS / DEIN STUNDENPLAN</text>
+      <text x="48" y="119" fill="#f4f8ff" font-size="34" font-weight="700">Heute, Dienstag</text>
+      <g font-size="14" font-weight="600">
+        <rect x="40" y="150" width="408" height="76" rx="18" fill="#10273a" stroke="#3c5d71"/>
+        <circle cx="63" cy="178" r="5" fill="#3bddab"/>
+        <text x="81" y="182" fill="#3bddab" font-size="11" letter-spacing="2">ALS NÄCHSTES</text>
+        <text x="60" y="210" fill="#f3f8ff" font-size="21" font-weight="700">Mathematik</text>
+        <text x="426" y="209" fill="#7fe7ff" text-anchor="end">10:15 – 11:00</text>
+        <rect x="40" y="240" width="408" height="62" rx="16" fill="#0d2032" stroke="#263f56"/>
+        <text x="60" y="277" fill="#eaf4ff">Biologie</text><text x="426" y="277" fill="#8ea6bd" text-anchor="end">Raum B204</text>
+        <rect x="40" y="314" width="408" height="62" rx="16" fill="#0d2032" stroke="#263f56"/>
+        <text x="60" y="351" fill="#eaf4ff">Englisch</text><text x="426" y="351" fill="#8ea6bd" text-anchor="end">Raum A105</text>
+      </g>
+      <rect x="40" y="401" width="408" height="102" rx="20" fill="#10273a" stroke="#3c5d71"/>
+      <text x="60" y="431" fill="#6ddfff" font-size="12" font-weight="700" letter-spacing="2">SICHER VERBUNDEN</text>
+      <text x="60" y="466" fill="#f3f8ff" font-size="17" font-weight="700">Deine Anmeldung bleibt aktiv.</text>
+      <text x="60" y="489" fill="#a8bed3" font-size="13">Verschlüsselt gespeichert · automatisch erneuert</text>
+    </g>
+    <g transform="translate(1142 579) rotate(-4)" filter="url(#shadow)">
+      <path d="M0 32c10-16 30-23 51-20l78 12 78-12c21-3 41 4 51 20l-7 49c-2 15-17 26-32 25l-47-2c-23-1-42-17-48-38l-5-19-5 19c-6 21-25 37-48 38l-47 2C3 105-12 94-14 79z" fill="#11273b" stroke="#8cb3c7" stroke-width="4"/>
+      <path d="M29 41c8-8 21-12 34-10l37 6-5 28c-3 17-18 29-35 29H38c-12 0-21-10-20-22l3-16c1-6 3-11 8-15zm137-4 37-6c13-2 26 2 34 10 5 4 7 9 8 15l3 16c1 12-8 22-20 22h-22c-17 0-32-12-35-29z" fill="#153c53" stroke="#64cde9" stroke-width="2"/>
+      <path d="M104 37h50" stroke="#b6ecfb" stroke-width="5" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

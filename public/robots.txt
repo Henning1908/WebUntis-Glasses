@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Sitemap: https://webuntis-glasses.henning-orbit-calendar.workers.dev/sitemap.xml

@@ -5,6 +5,6 @@
   "start_url": "/glasses.html",
   "display": "standalone",
   "background_color": "transparent",
-  "theme_color": "#ff6a35",
+  "theme_color": "#07111f",
   "scope": "/"
 }

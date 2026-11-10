@@ -1,10 +1,13 @@
 <div align="center">
-  <img src="public/favicon.svg" alt="Meta Display Apps" width="76">
+  <img src="public/images/webuntis-app-icon.svg" alt="WebUntis Glasses app icon" width="76">
   <h1>WebUntis Glasses</h1>
   <p><strong>Dein Stundenplan auf Meta Display Glasses.</strong></p>
   <p>Einmal verbinden. Angemeldet bleiben. Mit Sorgfalt gebaut von Meta Display Apps.</p>
-  <p><a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/">Web-App öffnen</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/glasses.html">Brillenansicht</a> · <a href="https://github.com/Henning1908/orbit-calendar-glasses">Orbit Calendar</a></p>
+  <p><a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/">Web-App öffnen</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/guide.de.html">Anleitung</a> · <a href="https://webuntis-glasses.henning-orbit-calendar.workers.dev/glasses.html">Brillenansicht</a> · <a href="https://orbit-calendar.henning-orbit-calendar.workers.dev/">Orbit Calendar</a></p>
+  <p><a href="https://gofund.me/89190630b">☕ Spendier mir einen Kaffee</a></p>
 </div>
+
+<img src="docs/assets/webuntis-hero.svg" alt="WebUntis timetable connected to Meta display glasses" width="100%">
 
 ---
 
@@ -89,7 +92,9 @@ Handy / Computer ── Einmal-Code ──────┘          │
 
 ## Projekte aus einer Werkstatt
 
-Meta Display Apps ist die gemeinsame Klammer für Apps auf Meta Smart Glasses. [Orbit Calendar](https://github.com/Henning1908/orbit-calendar-glasses) und WebUntis Glasses teilen dieselbe dunkle, klare Gestaltung und denselben Fokus auf kurze, gut lesbare Informationen im Display.
+Meta Display Apps ist die gemeinsame Klammer für Apps auf Meta Smart Glasses. [Orbit Calendar](https://github.com/Henning1908/orbit-calendar-glasses) und WebUntis Glasses teilen dieselbe dunkle, klare Gestaltung und denselben Fokus auf kurze, gut lesbare Informationen im Display. [Orbit Calendar öffnen](https://orbit-calendar.henning-orbit-calendar.workers.dev/) · [WebUntis Glasses öffnen](https://webuntis-glasses.henning-orbit-calendar.workers.dev/).
+
+![WebUntis Glasses system architecture](docs/assets/architecture.svg)
 
 ## Lizenz
 

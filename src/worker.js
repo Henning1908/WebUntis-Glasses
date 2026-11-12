@@ -161,23 +161,44 @@ async function centralDeviceForSession(request, env) {
 }
 
 async function centralDeviceForToken(deviceToken, env) {
-  if (!deviceToken || !env.MDA_LINK_SECRET) return null
+  if (!deviceToken) return null
+  if (!env.MDA_LINK_SECRET) {
+    console.warn('Meta Display Apps device resolution unavailable', { reason: 'missing_secret' })
+    return null
+  }
   const response = await env.META_DISPLAY_APPS.fetch(new Request('https://meta-display-apps.henning-orbit-calendar.workers.dev/api/device/resolve', {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.MDA_LINK_SECRET}` },
     body: JSON.stringify({ deviceToken }), signal: AbortSignal.timeout(8000),
   }))
-  if (!response.ok) return null
+  if (!response.ok) {
+    console.warn('Meta Display Apps device resolution failed', { status: response.status })
+    return null
+  }
   const data = await response.json().catch(() => null)
-  return data?.connected && /^[a-f0-9]{64}$/.test(data.deviceHash || '') ? data.deviceHash : null
+  const validDeviceHash = /^[a-f0-9]{64}$/.test(data?.deviceHash || '')
+  if (!data?.connected || !validDeviceHash) console.info('Meta Display Apps device token is not registered', { connected: Boolean(data?.connected), validDeviceHash })
+  return data?.connected && validDeviceHash ? data.deviceHash : null
 }
 
 async function createPair(env, deviceToken = encode(crypto.getRandomValues(new Uint8Array(24)))) {
-  const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000)
   const id = await hash(deviceToken)
-  const createdAt = Date.now()
-  await env.DB.prepare('INSERT INTO pairings (id, code, created_at, mda_device_hash) VALUES (?, ?, ?, ?)').bind(id, code, createdAt, await hash(deviceToken)).run()
-  await env.DB.prepare('DELETE FROM pairings WHERE created_at < ?').bind(createdAt - PAIR_TTL).run()
-  return { id, code, deviceToken, deviceHash: await hash(deviceToken) }
+  const deviceHash = id
+  await env.DB.prepare('DELETE FROM pairings WHERE created_at < ?').bind(Date.now() - PAIR_TTL).run()
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000)
+    const createdAt = Date.now()
+    try {
+      await env.DB.prepare(`INSERT INTO pairings (id, code, created_at, mda_device_hash)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET code = excluded.code, created_at = excluded.created_at,
+          mda_device_hash = excluded.mda_device_hash, status = 'waiting'`)
+        .bind(id, code, createdAt, deviceHash).run()
+      return { id, code, deviceToken, deviceHash }
+    } catch (error) {
+      if (attempt === 4) throw error
+    }
+  }
+  throw new Error('Es konnte kein WebUntis-Verbindungscode erstellt werden.')
 }
 
 async function route(request, env) {
@@ -264,6 +285,7 @@ async function route(request, env) {
       const registeredDevice = await centralDeviceForToken(mdaToken, env).catch(() => null)
       if (registeredDevice) {
         const profile = await loadProfile(env, registeredDevice)
+        console.info('WebUntis glasses recognized a shared device', { profileFound: Boolean(profile) })
         return new Response(JSON.stringify({ id: registeredDevice, connected: Boolean(profile), registered: true, setupRequired: !profile }), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': sharedDeviceCookie(mdaToken) } })
       }
       const cookieId = readCookie(request, 'webuntis_device')
@@ -272,6 +294,7 @@ async function route(request, env) {
       if (profile?.deviceId && knownId === profile.deviceId) {
         return new Response(JSON.stringify({ id: profile.deviceId, connected: true }), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': `webuntis_device=${profile.deviceId}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict` } })
       }
+      console.info('WebUntis glasses creating a fresh pairing', { hasSharedDeviceToken: Boolean(mdaToken), hasSavedDeviceId: Boolean(body.deviceId || cookieId) })
       const pair = await createPair(env, mdaToken || undefined)
       const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
       headers.append('Set-Cookie', sharedDeviceCookie(pair.deviceToken))

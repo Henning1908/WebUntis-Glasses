@@ -282,9 +282,14 @@
           deviceId: savedId
         })
       })
-        .then(function (response) { return response.json(); })
+        .then(function (response) {
+          return response.json().then(function (result) {
+            if (!response.ok) throw new Error(result.error || "WebUntis konnte die Geräteverbindung nicht herstellen.");
+            return result;
+          });
+        })
         .then(function (result) {
-          if (!result.id) throw new Error("Keine Geräteverbindung erhalten.");
+          if (!result.id) throw new Error(result.error || "Keine Geräteverbindung erhalten.");
           if (result.connected) {
             pair = result;
             if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);

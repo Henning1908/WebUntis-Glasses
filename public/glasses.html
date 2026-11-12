@@ -290,6 +290,12 @@
             if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);
             showConnected();
             checkPair();
+          } else if (result.registered && result.setupRequired) {
+            pair = result;
+            if (window.localStorage) window.localStorage.setItem("webuntis-glasses-device", result.id);
+            code.textContent = "✓";
+            state.innerHTML = "Gerät registriert. Richte WebUntis auf deinem Smartphone ein.";
+            checkPair();
           } else {
             pair = result;
             if (window.localStorage) {

@@ -1,6 +1,7 @@
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 const PAIR_TTL = 10 * 60 * 1000
+const hash = async (value) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(value)))].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } })
@@ -41,13 +42,26 @@ async function decrypt(value, secret) {
   return JSON.parse(decoder.decode(plain))
 }
 
-async function loadProfile(env) {
-  const row = await env.DB.prepare('SELECT encrypted_profile FROM app_state WHERE id = 1').first()
-  return row ? decrypt(row.encrypted_profile, env.WEBUNTIS_ENCRYPTION_KEY) : null
+async function loadProfile(env, deviceId = '') {
+  if (deviceId) {
+    const row = await env.DB.prepare('SELECT encrypted_profile FROM account_profiles WHERE device_id = ?').bind(deviceId).first()
+    if (row) return decrypt(row.encrypted_profile, env.WEBUNTIS_ENCRYPTION_KEY)
+    const legacy = await env.DB.prepare('SELECT encrypted_profile FROM app_state WHERE id = 1').first()
+    if (!legacy) return null
+    const profile = await decrypt(legacy.encrypted_profile, env.WEBUNTIS_ENCRYPTION_KEY)
+    return profile?.deviceId === deviceId ? profile : null
+  }
+  const legacy = await env.DB.prepare('SELECT encrypted_profile FROM app_state WHERE id = 1').first()
+  return legacy ? decrypt(legacy.encrypted_profile, env.WEBUNTIS_ENCRYPTION_KEY) : null
 }
 
-async function saveProfile(env, profile) {
+async function saveProfile(env, profile, deviceId = profile?.deviceId || '') {
   const encrypted = await encrypt(profile, env.WEBUNTIS_ENCRYPTION_KEY)
+  if (deviceId) {
+    await env.DB.prepare('INSERT INTO account_profiles (device_id, encrypted_profile, updated_at) VALUES (?, ?, ?) ON CONFLICT(device_id) DO UPDATE SET encrypted_profile = excluded.encrypted_profile, updated_at = excluded.updated_at')
+      .bind(deviceId, encrypted, Date.now()).run()
+    return
+  }
   await env.DB.prepare('INSERT INTO app_state (id, encrypted_profile, updated_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET encrypted_profile = excluded.encrypted_profile, updated_at = excluded.updated_at')
     .bind(encrypted, Date.now()).run()
 }
@@ -128,29 +142,71 @@ function hasDashboardSession(request, profile) {
   return Boolean(token && profile?.dashboardToken && token === profile.dashboardToken)
 }
 
-async function createPair(env) {
+function readCookie(request, name) {
+  const value = request.headers.get('Cookie') || ''
+  return value.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`))?.[1] || ''
+}
+
+function sharedDeviceCookie(value) {
+  return `mda_device=${value}; Domain=henning-orbit-calendar.workers.dev; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict`
+}
+
+async function centralDeviceForSession(request) {
+  const cookie = request.headers.get('Cookie') || ''
+  if (!cookie) return null
+  const response = await fetch('https://meta-display-apps.henning-orbit-calendar.workers.dev/api/device/me', { headers: { Cookie: cookie }, signal: AbortSignal.timeout(8000) })
+  if (!response.ok) return null
+  const data = await response.json().catch(() => null)
+  return data?.connected && /^[a-f0-9]{64}$/.test(data.deviceHash || '') ? data.deviceHash : null
+}
+
+async function centralDeviceForToken(deviceToken, env) {
+  if (!deviceToken || !env.MDA_LINK_SECRET) return null
+  const response = await fetch('https://meta-display-apps.henning-orbit-calendar.workers.dev/api/device/resolve', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.MDA_LINK_SECRET}` },
+    body: JSON.stringify({ deviceToken }), signal: AbortSignal.timeout(8000),
+  })
+  if (!response.ok) return null
+  const data = await response.json().catch(() => null)
+  return data?.connected && /^[a-f0-9]{64}$/.test(data.deviceHash || '') ? data.deviceHash : null
+}
+
+async function createPair(env, deviceToken = encode(crypto.getRandomValues(new Uint8Array(24)))) {
   const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000)
-  const id = encode(crypto.getRandomValues(new Uint8Array(18)))
+  const id = await hash(deviceToken)
   const createdAt = Date.now()
-  await env.DB.prepare('INSERT INTO pairings (id, code, created_at) VALUES (?, ?, ?)').bind(id, code, createdAt).run()
+  await env.DB.prepare('INSERT INTO pairings (id, code, created_at, mda_device_hash) VALUES (?, ?, ?, ?)').bind(id, code, createdAt, await hash(deviceToken)).run()
   await env.DB.prepare('DELETE FROM pairings WHERE created_at < ?').bind(createdAt - PAIR_TTL).run()
-  return { id, code }
+  return { id, code, deviceToken, deviceHash: await hash(deviceToken) }
 }
 
 async function route(request, env) {
   const url = new URL(request.url)
   try {
-    if (request.method === 'POST' && url.pathname === '/api/pair/create') return json(await createPair(env))
+    if (request.method === 'POST' && url.pathname === '/api/pair/create') {
+      const pair = await createPair(env, readCookie(request, 'mda_device') || undefined)
+      return json({ id: pair.id, code: pair.code }, 200, { 'Set-Cookie': sharedDeviceCookie(pair.deviceToken) })
+    }
     if (request.method === 'GET' && url.pathname === '/api/app-status') {
-      const profile = await loadProfile(env)
-      return json({ connected: Boolean(profile?.deviceId && hasDashboardSession(request, profile)) })
+      const accountDevice = await centralDeviceForSession(request).catch(() => null)
+      const deviceId = accountDevice || readCookie(request, 'webuntis_device')
+      const profile = deviceId ? await loadProfile(env, deviceId) : await loadProfile(env)
+      return json({ connected: Boolean(profile?.deviceId && (accountDevice || hasDashboardSession(request, profile))) })
     }
     if (request.method === 'POST' && url.pathname === '/api/disconnect') {
       const body = await readJson(request)
-      const profile = await loadProfile(env)
-      if (!hasDashboardSession(request, profile) && body.deviceId !== profile?.deviceId) return json({ error: 'Keine Berechtigung zum Trennen der Verbindung.' }, 401)
-      await env.DB.prepare('DELETE FROM app_state WHERE id = 1').run()
-      await env.DB.prepare('DELETE FROM pairings').run()
+      const accountDevice = await centralDeviceForSession(request).catch(() => null)
+      const deviceId = accountDevice || readCookie(request, 'webuntis_device')
+      if (deviceId) {
+        const profile = await loadProfile(env, deviceId)
+        if (!accountDevice && !hasDashboardSession(request, profile) && body.deviceId !== profile?.deviceId) return json({ error: 'Keine Berechtigung zum Trennen der Verbindung.' }, 401)
+        await env.DB.prepare('DELETE FROM account_profiles WHERE device_id = ?').bind(deviceId).run()
+        await env.DB.prepare('DELETE FROM pairings WHERE mda_device_hash = ?').bind(deviceId).run()
+      } else {
+        const profile = await loadProfile(env)
+        if (!hasDashboardSession(request, profile) && body.deviceId !== profile?.deviceId) return json({ error: 'Keine Berechtigung zum Trennen der Verbindung.' }, 401)
+        await env.DB.prepare('DELETE FROM app_state WHERE id = 1').run()
+      }
       const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
       headers.append('Set-Cookie', 'webuntis_session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Strict')
       headers.append('Set-Cookie', 'webuntis_device=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Strict')
@@ -158,8 +214,10 @@ async function route(request, env) {
     }
     if (request.method === 'GET' && url.pathname === '/api/pair/status') {
       const id = url.searchParams.get('id') || ''
-      const profile = await loadProfile(env)
+      const profile = await loadProfile(env, id)
       if (profile?.deviceId === id) return json({ status: 'connected', connected: true })
+      const legacy = await loadProfile(env)
+      if (legacy?.deviceId === id) return json({ status: 'connected', connected: true })
       const pair = await env.DB.prepare('SELECT id, code, created_at, status FROM pairings WHERE id = ?').bind(id).first()
       if (!pair || Date.now() - pair.created_at > PAIR_TTL) return json({ error: 'Kopplung nicht gefunden.' }, 404)
       return json({ status: pair.status, code: pair.code, connected: pair.status === 'connected' })
@@ -167,38 +225,70 @@ async function route(request, env) {
     if (request.method === 'POST' && url.pathname === '/api/pair/claim') {
       const body = await readJson(request)
       const code = String(body.code || '').replace(/\s/g, '')
-      if (!/^\d{6}$/.test(code)) return json({ error: 'Bitte den sechsstelligen Verbindungscode eingeben.' }, 400)
-      const pair = await env.DB.prepare('SELECT id, created_at FROM pairings WHERE code = ? ORDER BY created_at DESC LIMIT 1').bind(code).first()
-      if (!pair || Date.now() - pair.created_at > PAIR_TTL) return json({ error: 'Code ungültig oder abgelaufen.' }, 400)
-      const profile = await authenticate({ ...body, deviceId: pair.id })
+      let deviceId
+      if (code) {
+        if (!/^\d{6}$/.test(code)) return json({ error: 'Bitte den sechsstelligen Verbindungscode eingeben.' }, 400)
+        const pair = await env.DB.prepare('SELECT id, created_at, mda_device_hash FROM pairings WHERE code = ? ORDER BY created_at DESC LIMIT 1').bind(code).first()
+        if (!pair || Date.now() - pair.created_at > PAIR_TTL) return json({ error: 'Code ungültig oder abgelaufen.' }, 400)
+        deviceId = pair.mda_device_hash || pair.id
+      } else {
+        deviceId = await centralDeviceForSession(request).catch(() => null)
+        if (!deviceId) return json({ error: 'Melde dich bei Meta Display Apps an und verknüpfe zuerst deine Brille, oder gib den Code ein.' }, 401)
+      }
+      const profile = await authenticate({ ...body, deviceId })
       profile.dashboardToken = encode(crypto.getRandomValues(new Uint8Array(32)))
-      await saveProfile(env, profile)
-      await env.DB.prepare('UPDATE pairings SET status = \'connected\' WHERE id = ?').bind(pair.id).run()
-      return new Response(JSON.stringify({ connected: true, deviceId: pair.id }), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': `webuntis_session=${profile.dashboardToken}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict` } })
+      await saveProfile(env, profile, deviceId)
+      if (code) await env.DB.prepare('UPDATE pairings SET status = \'connected\' WHERE code = ?').bind(code).run()
+      const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
+      headers.append('Set-Cookie', `webuntis_session=${profile.dashboardToken}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict`)
+      headers.append('Set-Cookie', `webuntis_device=${deviceId}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict`)
+      return new Response(JSON.stringify({ connected: true, deviceId }), { headers })
+    }
+    if (request.method === 'POST' && url.pathname === '/api/mda/resolve-code') {
+      if (!env.MDA_LINK_SECRET || request.headers.get('Authorization') !== `Bearer ${env.MDA_LINK_SECRET}`) return json({ error: 'Unauthorized.' }, 401)
+      const body = await readJson(request)
+      const code = String(body.code || '').replace(/\s/g, '')
+      if (!/^\d{6}$/.test(code)) return json({ error: 'Enter the six-digit code shown in WebUntis Glasses.' }, 400)
+      const pair = await env.DB.prepare('SELECT id, created_at, mda_device_hash FROM pairings WHERE code = ?').bind(code).first()
+      if (!pair || !pair.mda_device_hash || Date.now() - pair.created_at > PAIR_TTL) return json({ error: 'That WebUntis Glasses code is invalid or has expired.' }, 400)
+      return json({ deviceId: pair.id, deviceHash: pair.mda_device_hash })
     }
     if (request.method === 'GET' && url.pathname === '/api/glasses/status') {
-      const profile = await loadProfile(env)
       const deviceId = url.searchParams.get('deviceId')
+      const profile = await loadProfile(env, deviceId)
       return json({ connected: Boolean(profile?.deviceId && profile.deviceId === deviceId), profileMissing: !profile?.deviceId, profile: null })
     }
     if (request.method === 'POST' && url.pathname === '/api/glasses/pair') {
       const body = await readJson(request)
-      const profile = await loadProfile(env)
-      const cookieId = (request.headers.get('Cookie') || '').match(/(?:^|;\s*)webuntis_device=([^;]+)/)?.[1]
+      const mdaToken = readCookie(request, 'mda_device')
+      const registeredDevice = await centralDeviceForToken(mdaToken, env).catch(() => null)
+      if (registeredDevice) {
+        const profile = await loadProfile(env, registeredDevice)
+        return new Response(JSON.stringify({ id: registeredDevice, connected: Boolean(profile), registered: true, setupRequired: !profile }), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': sharedDeviceCookie(mdaToken) } })
+      }
+      const cookieId = readCookie(request, 'webuntis_device')
+      const profile = body.deviceId ? await loadProfile(env, body.deviceId) : await loadProfile(env)
       const knownId = body.deviceId || cookieId
       if (profile?.deviceId && knownId === profile.deviceId) {
         return new Response(JSON.stringify({ id: profile.deviceId, connected: true }), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': `webuntis_device=${profile.deviceId}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict` } })
       }
-      const pair = await createPair(env)
-      return new Response(JSON.stringify(pair), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': `webuntis_device=${pair.id}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict` } })
+      const pair = await createPair(env, mdaToken || undefined)
+      const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
+      headers.append('Set-Cookie', sharedDeviceCookie(pair.deviceToken))
+      headers.append('Set-Cookie', `webuntis_device=${pair.id}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict`)
+      return new Response(JSON.stringify({ id: pair.id, code: pair.code }), { headers })
     }
     if (request.method === 'GET' && (url.pathname === '/api/timetable' || url.pathname === '/api/glasses/timetable')) {
-      const profile = await loadProfile(env)
+      const accountDevice = url.pathname === '/api/timetable' ? await centralDeviceForSession(request).catch(() => null) : null
+      const linkedDevice = url.pathname === '/api/timetable'
+        ? accountDevice || readCookie(request, 'webuntis_device')
+        : url.searchParams.get('deviceId') || ''
+      const profile = linkedDevice ? await loadProfile(env, linkedDevice) : await loadProfile(env)
       if (!profile?.deviceId) return json({ error: 'Noch nicht mit WebUntis verbunden.' }, 401)
-      if (url.pathname === '/api/timetable' && !hasDashboardSession(request, profile)) return json({ error: 'Bitte melde dich erneut an, um den Stundenplan in diesem Browser zu öffnen.' }, 401)
+      if (url.pathname === '/api/timetable' && !accountDevice && !hasDashboardSession(request, profile)) return json({ error: 'Bitte melde dich erneut an, um den Stundenplan in diesem Browser zu öffnen.' }, 401)
       if (url.pathname === '/api/glasses/timetable' && url.searchParams.get('deviceId') !== profile.deviceId) return json({ error: 'Brillengerät nicht registriert.' }, 401)
       const result = await timetable(profile)
-      if (result.profile) await saveProfile(env, result.profile)
+      if (result.profile) await saveProfile(env, result.profile, linkedDevice || undefined)
       const now = berlinDate(new Date())
       const today = untisDate(now)
       const berlinParts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).filter((p) => p.type !== 'literal').map((p) => [p.type, p.value]))

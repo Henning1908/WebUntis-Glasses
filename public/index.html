@@ -57,10 +57,10 @@
         <div class="section-heading"><div><span class="eyebrow">VERBINDUNG EINRICHTEN</span><h2>Einmal verbinden.<br><span>Einfach angemeldet bleiben.</span></h2></div><p>Deine verschlüsselte WebUntis-Sitzung bleibt auf dem Server gespeichert und wird bei Bedarf automatisch erneuert.</p></div>
         <div class="grid">
           <article class="card setup-card">
-            <div class="card-heading"><span class="step">01</span><div><h3>Mit der Brille koppeln</h3><p>Öffne die Brillenansicht. Gib den angezeigten Code hier ein.</p></div></div>
+              <div class="card-heading"><span class="step">01</span><div><h3>Mit der Brille koppeln</h3><p>Öffne die Brillenansicht. Nach der einmaligen Geräteverknüpfung kann dieses Feld leer bleiben.</p></div></div>
             <form id="pair-form">
               <label for="code">Verbindungscode</label>
-              <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000 000" autocomplete="one-time-code" required>
+              <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="Optional · 000 000" autocomplete="one-time-code">
               <div class="form-grid"><div><label for="baseUrl">WebUntis-Server</label><input id="baseUrl" name="baseUrl" type="url" value="https://ggb.webuntis.com" placeholder="https://schule.webuntis.com" required></div><div><label for="school">Schulkennung</label><input id="school" name="school" value="ggb" placeholder="schule" required></div></div>
               <label for="username">WebUntis-Benutzername</label>
               <input id="username" name="username" autocomplete="username" required>

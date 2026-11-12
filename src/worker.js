@@ -151,10 +151,10 @@ function sharedDeviceCookie(value) {
   return `mda_device=${value}; Domain=henning-orbit-calendar.workers.dev; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Strict`
 }
 
-async function centralDeviceForSession(request) {
+async function centralDeviceForSession(request, env) {
   const cookie = request.headers.get('Cookie') || ''
   if (!cookie) return null
-  const response = await fetch('https://meta-display-apps.henning-orbit-calendar.workers.dev/api/device/me', { headers: { Cookie: cookie }, signal: AbortSignal.timeout(8000) })
+  const response = await env.META_DISPLAY_APPS.fetch(new Request('https://meta-display-apps.henning-orbit-calendar.workers.dev/api/device/me', { headers: { Cookie: cookie }, signal: AbortSignal.timeout(8000) }))
   if (!response.ok) return null
   const data = await response.json().catch(() => null)
   return data?.connected && /^[a-f0-9]{64}$/.test(data.deviceHash || '') ? data.deviceHash : null
@@ -162,10 +162,10 @@ async function centralDeviceForSession(request) {
 
 async function centralDeviceForToken(deviceToken, env) {
   if (!deviceToken || !env.MDA_LINK_SECRET) return null
-  const response = await fetch('https://meta-display-apps.henning-orbit-calendar.workers.dev/api/device/resolve', {
+  const response = await env.META_DISPLAY_APPS.fetch(new Request('https://meta-display-apps.henning-orbit-calendar.workers.dev/api/device/resolve', {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.MDA_LINK_SECRET}` },
     body: JSON.stringify({ deviceToken }), signal: AbortSignal.timeout(8000),
-  })
+  }))
   if (!response.ok) return null
   const data = await response.json().catch(() => null)
   return data?.connected && /^[a-f0-9]{64}$/.test(data.deviceHash || '') ? data.deviceHash : null
@@ -188,14 +188,14 @@ async function route(request, env) {
       return json({ id: pair.id, code: pair.code }, 200, { 'Set-Cookie': sharedDeviceCookie(pair.deviceToken) })
     }
     if (request.method === 'GET' && url.pathname === '/api/app-status') {
-      const accountDevice = await centralDeviceForSession(request).catch(() => null)
+      const accountDevice = await centralDeviceForSession(request, env).catch(() => null)
       const deviceId = accountDevice || readCookie(request, 'webuntis_device')
       const profile = deviceId ? await loadProfile(env, deviceId) : await loadProfile(env)
       return json({ connected: Boolean(profile?.deviceId && (accountDevice || hasDashboardSession(request, profile))) })
     }
     if (request.method === 'POST' && url.pathname === '/api/disconnect') {
       const body = await readJson(request)
-      const accountDevice = await centralDeviceForSession(request).catch(() => null)
+      const accountDevice = await centralDeviceForSession(request, env).catch(() => null)
       const deviceId = accountDevice || readCookie(request, 'webuntis_device')
       if (deviceId) {
         const profile = await loadProfile(env, deviceId)
@@ -232,7 +232,7 @@ async function route(request, env) {
         if (!pair || Date.now() - pair.created_at > PAIR_TTL) return json({ error: 'Code ungültig oder abgelaufen.' }, 400)
         deviceId = pair.mda_device_hash || pair.id
       } else {
-        deviceId = await centralDeviceForSession(request).catch(() => null)
+        deviceId = await centralDeviceForSession(request, env).catch(() => null)
         if (!deviceId) return json({ error: 'Melde dich bei Meta Display Apps an und verknüpfe zuerst deine Brille, oder gib den Code ein.' }, 401)
       }
       const profile = await authenticate({ ...body, deviceId })
@@ -279,7 +279,7 @@ async function route(request, env) {
       return new Response(JSON.stringify({ id: pair.id, code: pair.code }), { headers })
     }
     if (request.method === 'GET' && (url.pathname === '/api/timetable' || url.pathname === '/api/glasses/timetable')) {
-      const accountDevice = url.pathname === '/api/timetable' ? await centralDeviceForSession(request).catch(() => null) : null
+      const accountDevice = url.pathname === '/api/timetable' ? await centralDeviceForSession(request, env).catch(() => null) : null
       const linkedDevice = url.pathname === '/api/timetable'
         ? accountDevice || readCookie(request, 'webuntis_device')
         : url.searchParams.get('deviceId') || ''
